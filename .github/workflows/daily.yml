@@ -1,0 +1,44 @@
+name: repo-upkeep
+
+on:
+  schedule:
+    # Ticks every 2 hours; the actual decision to act (or not) happens
+    # inside the script, gated by config.yml's runProbability/quietHours/
+    # maxActionsPerDay. This is what makes real activity land at
+    # unpredictable times instead of on a fixed clock.
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run without pushing/creating anything (log only)"
+        type: boolean
+        default: false
+
+permissions:
+  # Needed to commit .upkeep-state.json back to this control repo.
+  contents: write
+
+concurrency:
+  group: repo-upkeep
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    env:
+      # Takes precedence over the ambient GITHUB_TOKEN for the gh CLI, so
+      # every target-repo operation (clone/push/PR/review/issue) uses this
+      # PAT's broader scope instead of the control-repo-only default token.
+      GH_TOKEN: ${{ secrets.UPKEEP_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run repo-upkeep
+        run: npx tsx src/index.ts run ${{ inputs.dry_run && '--dry-run' || '' }}

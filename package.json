@@ -1,0 +1,33 @@
+{
+  "name": "repo-upkeep",
+  "version": "0.1.0",
+  "description": "Deterministic, no-AI daily automation that keeps connected repos looking alive: safe commits, PR reviews, pull requests, and issues — driven entirely by git/gh CLI commands, never by model inference.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "repo-upkeep": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "tsx src/index.ts",
+    "run": "tsx src/index.ts run",
+    "dry-run": "tsx src/index.ts run --dry-run",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "minimatch": "^10.0.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

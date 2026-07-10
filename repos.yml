@@ -1,0 +1,30 @@
+# List of target repositories this control repo is allowed to act on.
+# Each entry configures which actions are enabled and any per-repo overrides.
+#
+# The token in the GH_TOKEN secret must have `contents`, `pull-requests`, and
+# `issues` write access to every repo listed here.
+
+repos:
+  - repo: "your-username/your-project"
+    actions:
+      commit: true
+      pull_request: true
+      review: true
+      issue: true
+    # Optional: glob paths this bot may touch in THIS repo. Overrides the
+    # global safePaths in config.yml when set.
+    safePaths:
+      - "docs/**"
+      - "*.md"
+      - "CHANGELOG.md"
+    # Optional: command run inside a clone of the repo to verify a change
+    # didn't break anything before it's committed/pushed. Non-zero exit
+    # aborts the action with no changes made.
+    verifyCommand: "npm test --silent"
+
+  # - repo: "your-username/another-project"
+  #   actions:
+  #     commit: true
+  #     pull_request: false
+  #     review: true
+  #     issue: true

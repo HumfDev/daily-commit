@@ -1,0 +1,33 @@
+# Global settings for repo-upkeep. Per-repo overrides live in repos.yml.
+
+# Probability [0-1] that ANY action runs on a given scheduler tick.
+# The workflow ticks every couple hours; this keeps real activity from
+# landing on a predictable clock.
+runProbability: 0.35
+
+# Hours (0-23, UTC — the GitHub Actions runner clock) during which
+# repo-upkeep will never act, even if a tick fires.
+quietHours: [0, 1, 2, 3, 4, 5]
+
+# Max number of actions (summed across all repos) performed per calendar day.
+maxActionsPerDay: 2
+
+# Relative weights used when choosing an action type on a tick that fires.
+# "noop" makes some ticks (and some whole days) produce no activity at all.
+actionWeights:
+  commit: 3
+  pull_request: 2
+  review: 2
+  issue: 1
+  noop: 4
+
+# Default safe paths the commit/pull_request actions are allowed to touch.
+# A repo in repos.yml can override this with its own safePaths.
+safePaths:
+  - "docs/**"
+  - "*.md"
+  - "CHANGELOG.md"
+  - ".github/**"
+
+# Minimum hours between two actions of the same type on the same repo.
+cooldownHours: 20
