@@ -1,19 +1,21 @@
 {
-  "name": "repo-upkeep",
+  "name": "daily-commit",
   "version": "0.1.0",
   "description": "Deterministic, no-AI daily automation that keeps connected repos looking alive: safe commits, PR reviews, pull requests, and issues — driven entirely by git/gh CLI commands, never by model inference.",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "repo-upkeep": "./dist/index.js"
+    "dc": "./bin/dc.js",
+    "daily-commit": "./bin/dc.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "start": "tsx src/index.ts",
-    "run": "tsx src/index.ts run",
-    "dry-run": "tsx src/index.ts run --dry-run",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HumfDev/daily-commit.git"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",

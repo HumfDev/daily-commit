@@ -1,4 +1,4 @@
-import { run } from "./exec.js";
+import { run, runInherit } from "./exec.js";
 
 export interface OpenPR {
   number: number;
@@ -120,4 +120,45 @@ export async function setupGitCredentialHelper(): Promise<void> {
 
 export function httpsCloneUrl(repo: string): string {
   return `https://github.com/${repo}.git`;
+}
+
+export async function isGhAuthenticated(): Promise<boolean> {
+  const result = await run("gh", ["auth", "status"]);
+  return result.code === 0;
+}
+
+export async function loginGhInteractively(): Promise<void> {
+  const code = await runInherit("gh", ["auth", "login"]);
+  if (code !== 0) {
+    throw new Error("gh auth login failed or was cancelled");
+  }
+}
+
+export interface GhUser {
+  login: string;
+  id: number;
+  name: string | null;
+}
+
+export async function getAuthenticatedUser(): Promise<GhUser> {
+  const out = await gh(["api", "user", "--jq", "{login:.login,id:.id,name:.name}"]);
+  return JSON.parse(out) as GhUser;
+}
+
+export interface GhRepoListItem {
+  nameWithOwner: string;
+  isPrivate: boolean;
+  description: string | null;
+}
+
+export async function listUserRepos(limit = 100): Promise<GhRepoListItem[]> {
+  const out = await gh([
+    "repo",
+    "list",
+    "--limit",
+    String(limit),
+    "--json",
+    "nameWithOwner,isPrivate,description",
+  ]);
+  return out ? (JSON.parse(out) as GhRepoListItem[]) : [];
 }

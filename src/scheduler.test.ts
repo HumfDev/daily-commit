@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GlobalConfig } from "./config.js";
 import { decideTick } from "./scheduler.js";
-import type { UpkeepState } from "./state.js";
+import type { DcState } from "./state.js";
 
 function baseConfig(overrides: Partial<GlobalConfig> = {}): GlobalConfig {
   return {
@@ -11,11 +11,13 @@ function baseConfig(overrides: Partial<GlobalConfig> = {}): GlobalConfig {
     actionWeights: { commit: 3, pull_request: 2, review: 2, issue: 1, noop: 4 },
     safePaths: ["docs/**"],
     cooldownHours: 20,
+    gitAuthor: "Test User",
+    gitEmail: "test@users.noreply.github.com",
     ...overrides,
   };
 }
 
-function emptyState(): UpkeepState {
+function emptyState(): DcState {
   return { lastRun: {}, dailyCount: {} };
 }
 
@@ -38,7 +40,7 @@ describe("decideTick", () => {
     const now = new Date("2026-07-10T12:00:00Z");
     vi.setSystemTime(now);
     const dateKey = now.toISOString().slice(0, 10);
-    const state: UpkeepState = { lastRun: {}, dailyCount: { [dateKey]: 5 } };
+    const state: DcState = { lastRun: {}, dailyCount: { [dateKey]: 5 } };
     const decision = decideTick(baseConfig({ maxActionsPerDay: 5 }), state);
     expect(decision.shouldRun).toBe(false);
     expect(decision.reason).toContain("maxActionsPerDay");

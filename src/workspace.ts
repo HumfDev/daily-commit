@@ -4,18 +4,23 @@ import { join } from "node:path";
 import { cloneShallow, configureIdentity } from "./git.js";
 import { httpsCloneUrl } from "./gh.js";
 
-export const BOT_NAME = "repo-upkeep-bot";
-export const BOT_EMAIL = "repo-upkeep-bot@users.noreply.github.com";
+export interface GitIdentity {
+  name: string;
+  email: string;
+}
 
 export interface Workspace {
   dir: string;
   repo: string;
 }
 
-export async function createWorkspace(repo: string): Promise<Workspace> {
-  const dir = await mkdtemp(join(tmpdir(), "repo-upkeep-"));
+export async function createWorkspace(
+  repo: string,
+  identity: GitIdentity,
+): Promise<Workspace> {
+  const dir = await mkdtemp(join(tmpdir(), "daily-commit-"));
   await cloneShallow(httpsCloneUrl(repo), dir);
-  await configureIdentity(BOT_NAME, BOT_EMAIL, { cwd: dir });
+  await configureIdentity(identity.name, identity.email, { cwd: dir });
   return { dir, repo };
 }
 

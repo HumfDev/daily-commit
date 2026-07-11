@@ -5,6 +5,8 @@ reviews, pull requests, and issues — generated entirely by deterministic
 `git`/`gh` CLI commands, linters, and templates. No LLM calls, no embedded
 prompts, no model API keys, anywhere in this codebase.
 
+CLI: **`dc`** (short for daily commit).
+
 ## What it actually does
 
 Once a day-ish (randomized — see below), for one repo you've listed in
@@ -52,53 +54,84 @@ entire content-generation surface in `src/templates/` and `src/mutations.ts`.
 - Every commit message / PR title & body / issue title & body / review
   comment is drawn from a randomized template pool in `src/templates/`.
 
+## Quick start (one command)
+
+```bash
+npx daily-commit
+```
+
+That downloads this project, installs dependencies, then launches
+**interactive onboarding**: log into GitHub (if needed), confirm your commit
+identity, and pick which repos the bot may access.
+
+Optional directory:
+
+```bash
+npx daily-commit my-daily-commit
+```
+
+From GitHub directly (no npm publish required):
+
+```bash
+npx github:HumfDev/daily-commit install
+```
+
+### CLI (`dc`)
+
+After install, use the `dc` prefix for everything:
+
+```bash
+dc install [dir]    # download + onboard
+dc onboard          # re-run interactive setup
+dc run              # one live tick
+dc dry-run          # one tick without remote writes
+dc help
+```
+
+Link the local bin (from this repo) with:
+
+```bash
+npm install
+npm link            # puts `dc` on your PATH
+```
+
 ## Setup
 
-1. **Use this repo as your control repo.** Fork it, or use it as a template.
-   This is the repo the workflow runs *in* — it acts on the repos you list
-   below, which can be different repos (or this one).
+1. **Install** via `npx daily-commit`, or clone this repo as your control
+   repo (the workflow runs *here* and acts on repos you select).
 
-2. **List target repos in `repos.yml`:**
+2. **Onboard** (`dc onboard`) writes `config.yml` + `repos.yml` for you:
+   - GitHub account → `gitAuthor` / `gitEmail` (commits attribute to you)
+   - Multi-select your repos (or type `owner/name`)
 
-   ```yaml
-   repos:
-     - repo: "your-username/your-project"
-       actions:
-         commit: true
-         pull_request: true
-         review: true
-         issue: true
-       safePaths: ["docs/**", "*.md", "CHANGELOG.md"]
-       verifyCommand: "npm test --silent"
-   ```
+   You can still edit those files by hand afterward.
 
 3. **Create a fine-grained GitHub PAT** with `contents`, `pull-requests`, and
    `issues` **write** access scoped to every repo listed in `repos.yml` (and
    to this control repo itself, if you want it to persist run history — see
-   below). Add it as a repository secret named `UPKEEP_PAT`.
+   below). Add it as a repository secret named `DC_PAT`. The PAT should
+   belong to the same GitHub user set as the commit author.
 
-4. **Tune `config.yml`** if you want (probabilities, quiet hours, safe paths,
-   cooldowns) — sane defaults are already in place.
-
-5. **Push.** The included workflow (`.github/workflows/daily.yml`) starts
+4. **Push.** The included workflow (`.github/workflows/daily.yml`) starts
    ticking on its cron automatically. Trigger it manually any time from the
    Actions tab (`workflow_dispatch`), optionally with `dry_run: true`.
 
 ### Local dry run
 
 ```bash
-npm install
-npm run dry-run   # picks + generates content, never pushes or calls gh
+dc dry-run
 ```
 
 ## Config reference
 
-- **`repos.yml`** — the list of repos this control repo may act on, with
-  per-repo action toggles, `safePaths` override, and optional
-  `verifyCommand`.
 - **`config.yml`** — global scheduling/randomization knobs: `runProbability`,
   `quietHours`, `maxActionsPerDay`, `actionWeights`, default `safePaths`,
-  `cooldownHours`.
+  `cooldownHours`, plus required `gitAuthor` / `gitEmail` (your GitHub
+  identity so commits attribute to your account). Prefer `dc onboard`
+  to generate this file.
+- **`repos.yml`** — the list of repos this control repo may act on, with
+  per-repo action toggles, `safePaths` override, and optional
+  `verifyCommand`. Prefer `dc onboard` to select repos interactively.
 
 ## Safety model
 
@@ -113,7 +146,7 @@ npm run dry-run   # picks + generates content, never pushes or calls gh
 
 ## State
 
-`.upkeep-state.json` in this control repo tracks the last run time per
+`.dc-state.json` in this control repo tracks the last run time per
 repo+action and today's action count, so `maxActionsPerDay` and
 `cooldownHours` are enforced across ticks. It's committed back automatically
 using the workflow's default `GITHUB_TOKEN` (`contents: write` permission).

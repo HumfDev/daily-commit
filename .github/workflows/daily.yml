@@ -1,4 +1,4 @@
-name: repo-upkeep
+name: daily-commit
 
 on:
   schedule:
@@ -15,11 +15,11 @@ on:
         default: false
 
 permissions:
-  # Needed to commit .upkeep-state.json back to this control repo.
+  # Needed to commit .dc-state.json back to this control repo.
   contents: write
 
 concurrency:
-  group: repo-upkeep
+  group: daily-commit
   cancel-in-progress: false
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
       # Takes precedence over the ambient GITHUB_TOKEN for the gh CLI, so
       # every target-repo operation (clone/push/PR/review/issue) uses this
       # PAT's broader scope instead of the control-repo-only default token.
-      GH_TOKEN: ${{ secrets.UPKEEP_PAT }}
+      GH_TOKEN: ${{ secrets.DC_PAT }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,5 +40,5 @@ jobs:
 
       - run: npm ci
 
-      - name: Run repo-upkeep
+      - name: Run daily-commit
         run: npx tsx src/index.ts run ${{ inputs.dry_run && '--dry-run' || '' }}

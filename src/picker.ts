@@ -1,6 +1,6 @@
 import type { ActionType, GlobalConfig, RepoEntry } from "./config.js";
 import { pick, pickWeighted } from "./random.js";
-import { hoursSinceLastRun, type UpkeepState } from "./state.js";
+import { hoursSinceLastRun, type DcState } from "./state.js";
 
 export interface Selection {
   repo: RepoEntry;
@@ -17,7 +17,7 @@ const ACTION_TYPES: Exclude<ActionType, "noop">[] = ["commit", "pull_request", "
 export function pickRepoAndAction(
   repos: RepoEntry[],
   global: GlobalConfig,
-  state: UpkeepState,
+  state: DcState,
 ): Selection {
   const repo = pick(repos);
 

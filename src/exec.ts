@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -34,4 +35,21 @@ export async function run(
       code: typeof e.code === "number" ? e.code : 1,
     };
   }
+}
+
+/** Interactive commands (e.g. `gh auth login`) that need a real TTY. */
+export function runInherit(
+  cmd: string,
+  args: string[],
+  opts: { cwd?: string; env?: NodeJS.ProcessEnv } = {},
+): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, {
+      stdio: "inherit",
+      cwd: opts.cwd,
+      env: opts.env ?? process.env,
+    });
+    child.on("error", reject);
+    child.on("close", (code) => resolve(code ?? 1));
+  });
 }

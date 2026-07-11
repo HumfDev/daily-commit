@@ -6,7 +6,7 @@ import { addAll, changedFiles, commit, configureIdentity } from "./git.js";
 import { run } from "./exec.js";
 
 async function initRepo(): Promise<string> {
-  const dir = mkdtempSync(join(tmpdir(), "upkeep-git-test-"));
+  const dir = mkdtempSync(join(tmpdir(), "dc-git-test-"));
   await run("git", ["init", "-q", "-b", "main"], { cwd: dir });
   await configureIdentity("Test", "test@example.com", { cwd: dir });
   return dir;

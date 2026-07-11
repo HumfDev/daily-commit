@@ -1,11 +1,11 @@
 # List of target repositories this control repo is allowed to act on.
 # Each entry configures which actions are enabled and any per-repo overrides.
 #
-# The token in the GH_TOKEN secret must have `contents`, `pull-requests`, and
+# The token in the DC_PAT secret must have `contents`, `pull-requests`, and
 # `issues` write access to every repo listed here.
 
 repos:
-  - repo: "your-username/your-project"
+  - repo: "humfdev/test-repo"
     actions:
       commit: true
       pull_request: true
@@ -20,7 +20,8 @@ repos:
     # Optional: command run inside a clone of the repo to verify a change
     # didn't break anything before it's committed/pushed. Non-zero exit
     # aborts the action with no changes made.
-    verifyCommand: "npm test --silent"
+    # Omitted for this test repo — it has no package.json / npm test suite.
+    # For real Node projects, set e.g. verifyCommand: "npm test --silent"
 
   # - repo: "your-username/another-project"
   #   actions:

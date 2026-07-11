@@ -33,7 +33,7 @@ export const PR_BODY_OPENERS = [
 export const PR_BODY_CLOSERS = [
   "Safe to review whenever convenient.",
   "Low-risk, happy to have this merged at your leisure.",
-  "No rush — batching this with routine upkeep.",
+  "No rush — batching this with other routine maintenance.",
 ];
 
 export function commitMessage(): string {

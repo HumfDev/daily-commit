@@ -35,6 +35,12 @@ const ConfigFileSchema = z.object({
   actionWeights: ActionWeightsSchema.default({}),
   safePaths: z.array(z.string()).min(1),
   cooldownHours: z.number().min(0).default(20),
+  // Git commit author — use your GitHub name + noreply email so commits
+  // attribute to your account (avatar + username) instead of a bot identity.
+  // Find the email under GitHub → Settings → Emails (Keep my email private).
+  // Prefer `dc onboard` to set these.
+  gitAuthor: z.string().min(1),
+  gitEmail: z.string().email(),
 });
 
 export type RepoEntry = z.infer<typeof RepoEntrySchema>;

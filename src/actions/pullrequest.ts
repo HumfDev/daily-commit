@@ -11,7 +11,7 @@ export interface PullRequestOutcome extends CommitOutcome {
 }
 
 function branchName(): string {
-  return `repo-upkeep/${randomBytes(4).toString("hex")}`;
+  return `dc/${randomBytes(4).toString("hex")}`;
 }
 
 export async function runPullRequestAction(

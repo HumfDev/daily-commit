@@ -1,28 +1,37 @@
+#!/usr/bin/env node
+import { basename } from "node:path";
 import { runDirectCommitAction, type CommitOutcome } from "./actions/commit.js";
 import { runIssueAction, type IssueOutcome } from "./actions/issue.js";
 import { runPullRequestAction, type PullRequestOutcome } from "./actions/pullrequest.js";
 import { runReviewAction, type ReviewOutcome } from "./actions/review.js";
-import { loadConfig, type ActionType, type RepoEntry } from "./config.js";
+import { loadConfig, type ActionType, type GlobalConfig, type RepoEntry } from "./config.js";
 import { setupGitCredentialHelper } from "./gh.js";
 import { addPath, commit as gitCommit, configureIdentity, currentBranch, push } from "./git.js";
+import { runInstall } from "./install.js";
+import { runOnboard } from "./onboard/index.js";
 import { pickRepoAndAction } from "./picker.js";
 import { decideTick } from "./scheduler.js";
 import { actionsToday, loadState, recordAction, saveState } from "./state.js";
-import { BOT_EMAIL, BOT_NAME, createWorkspace, destroyWorkspace } from "./workspace.js";
+import { createWorkspace, destroyWorkspace, type GitIdentity } from "./workspace.js";
 
 type Outcome = CommitOutcome | PullRequestOutcome | IssueOutcome | ReviewOutcome;
+
+function identityFrom(global: GlobalConfig): GitIdentity {
+  return { name: global.gitAuthor, email: global.gitEmail };
+}
 
 async function dispatch(
   repo: RepoEntry,
   actionType: Exclude<ActionType, "noop">,
   dryRun: boolean,
+  identity: GitIdentity,
 ): Promise<Outcome> {
   if (actionType === "review") {
     return runReviewAction(repo, dryRun);
   }
 
   const { global } = await loadConfig();
-  const ws = await createWorkspace(repo.repo);
+  const ws = await createWorkspace(repo.repo, identity);
   try {
     switch (actionType) {
       case "commit":
@@ -37,20 +46,25 @@ async function dispatch(
   }
 }
 
-async function persistState(repo: string, actionType: ActionType): Promise<void> {
+async function persistState(
+  repo: string,
+  actionType: ActionType,
+  identity: GitIdentity,
+): Promise<void> {
   const state = await loadState();
   const next = recordAction(state, repo, actionType);
   await saveState(next);
 
-  await configureIdentity(BOT_NAME, BOT_EMAIL, { cwd: process.cwd() });
-  await addPath(".upkeep-state.json", { cwd: process.cwd() });
-  await gitCommit(`chore: record upkeep run (${repo} ${actionType})`, { cwd: process.cwd() });
+  await configureIdentity(identity.name, identity.email, { cwd: process.cwd() });
+  await addPath(".dc-state.json", { cwd: process.cwd() });
+  await gitCommit(`chore: record daily-commit run (${repo} ${actionType})`, { cwd: process.cwd() });
   const branch = await currentBranch({ cwd: process.cwd() });
   await push(branch, { cwd: process.cwd() });
 }
 
 async function runCommand(dryRun: boolean): Promise<void> {
   const { global, repos } = await loadConfig();
+  const identity = identityFrom(global);
   const state = await loadState();
 
   if (!dryRun) {
@@ -71,31 +85,86 @@ async function runCommand(dryRun: boolean): Promise<void> {
     return;
   }
 
-  const outcome = await dispatch(selection.repo, selection.actionType, dryRun);
+  const outcome = await dispatch(selection.repo, selection.actionType, dryRun, identity);
   console.log("[result]", JSON.stringify(outcome, null, 2));
 
   if (!dryRun && outcome.performed) {
-    await persistState(selection.repo.repo, selection.actionType);
+    await persistState(selection.repo.repo, selection.actionType, identity);
     console.log(
       `[state] recorded run (today's total: ${actionsToday(await loadState()) }/${global.maxActionsPerDay})`,
     );
   }
 }
 
+function printUsage(): void {
+  console.error(`daily commit (dc)
+
+Usage:
+  dc install [dir]       Download this project, install deps, run onboard
+  dc onboard             Interactive setup (GitHub account + repos)
+  dc run                 Run one daily-commit tick
+  dc dry-run             Same as run, without pushing / creating via gh write APIs
+
+One-liner:
+  npx daily-commit
+  npx daily-commit install [dir]
+  npx github:HumfDev/daily-commit install [dir]`);
+}
+
+function invokedAsInstaller(): boolean {
+  const bin = basename(process.argv[1] ?? "").replace(/\.(js|mjs|cjs)$/i, "");
+  return bin === "daily-commit";
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  const command = args[0] ?? "run";
-  const dryRun = args.includes("--dry-run");
+  const command = args[0];
 
-  if (command !== "run") {
-    console.error(`Unknown command "${command}". Usage: repo-upkeep run [--dry-run]`);
-    process.exit(1);
+  if (!command) {
+    if (invokedAsInstaller()) {
+      await runInstall("daily-commit");
+      return;
+    }
+    printUsage();
+    return;
   }
 
-  await runCommand(dryRun);
+  if (command === "install") {
+    await runInstall(args[1] ?? "daily-commit");
+    return;
+  }
+
+  if (command === "onboard") {
+    await runOnboard();
+    return;
+  }
+
+  if (command === "run") {
+    await runCommand(args.includes("--dry-run"));
+    return;
+  }
+
+  if (command === "dry-run") {
+    await runCommand(true);
+    return;
+  }
+
+  if (command === "help" || command === "--help" || command === "-h") {
+    printUsage();
+    return;
+  }
+
+  // `npx daily-commit my-dir` → install into my-dir
+  if (invokedAsInstaller() && !command.startsWith("-")) {
+    await runInstall(command);
+    return;
+  }
+
+  printUsage();
+  process.exit(1);
 }
 
 main().catch((err) => {
-  console.error(err);
+  console.error(err instanceof Error ? err.message : err);
   process.exit(1);
 });

@@ -15,8 +15,8 @@ export interface IssueOutcome {
   body?: string;
 }
 
-const TODO_ISSUE_TITLE = "[upkeep] TODO/FIXME sweep";
-const DEPS_ISSUE_TITLE = "[upkeep] Outdated dependency report";
+const TODO_ISSUE_TITLE = "[dc] TODO/FIXME sweep";
+const DEPS_ISSUE_TITLE = "[dc] Outdated dependency report";
 
 async function buildTodoIssue(ws: Workspace): Promise<{ title: string; body: string } | null> {
   const result = await runTodoSweep(ws.dir);

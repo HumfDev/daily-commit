@@ -1,5 +1,5 @@
 import type { GlobalConfig } from "./config.js";
-import { actionsToday, type UpkeepState } from "./state.js";
+import { actionsToday, type DcState } from "./state.js";
 import { chance } from "./random.js";
 
 export interface TickDecision {
@@ -13,7 +13,7 @@ export interface TickDecision {
  * a daily cap, and a random roll — is what makes the actual activity land
  * at unpredictable times instead of every single tick.
  */
-export function decideTick(global: GlobalConfig, state: UpkeepState): TickDecision {
+export function decideTick(global: GlobalConfig, state: DcState): TickDecision {
   const hour = new Date().getUTCHours();
   if (global.quietHours.includes(hour)) {
     return { shouldRun: false, reason: `hour ${hour} UTC is within quietHours` };

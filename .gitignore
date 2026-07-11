@@ -4,4 +4,4 @@ dist/
 .env
 .DS_Store
 .tmp/
-.upkeep-cache/
+.dc-cache/

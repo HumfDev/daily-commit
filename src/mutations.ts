@@ -12,7 +12,7 @@ const LOG_BLURBS = [
   "Routine housekeeping check-in — nothing to report.",
   "Scheduled maintenance sweep completed.",
   "Docs housekeeping pass.",
-  "Automated upkeep check-in.",
+  "Daily commit check-in.",
 ];
 
 /**
@@ -20,8 +20,8 @@ const LOG_BLURBS = [
  * owns outright, under docs/**. Doesn't depend on any file existing in the
  * target repo already, so it never fails to find something to touch.
  */
-async function appendUpkeepLog(repoDir: string): Promise<Mutation> {
-  const relPath = "docs/UPKEEP_LOG.md";
+async function appendDailyCommitLog(repoDir: string): Promise<Mutation> {
+  const relPath = "docs/DAILY_COMMIT_LOG.md";
   const absPath = join(repoDir, relPath);
   await mkdir(dirname(absPath), { recursive: true });
 
@@ -29,17 +29,17 @@ async function appendUpkeepLog(repoDir: string): Promise<Mutation> {
   try {
     existing = await readFile(absPath, "utf8");
   } catch {
-    existing = "# Upkeep Log\n\nAutomated, non-functional housekeeping entries.\n\n";
+    existing = "# Daily Commit Log\n\nAutomated, non-functional housekeeping entries.\n\n";
   }
 
   const line = `- ${today()}: ${pick(LOG_BLURBS)}\n`;
   await writeFile(absPath, existing + line, "utf8");
 
-  return { filePath: relPath, description: "Appended an entry to docs/UPKEEP_LOG.md." };
+  return { filePath: relPath, description: "Appended an entry to docs/DAILY_COMMIT_LOG.md." };
 }
 
 /**
- * Best-effort mutation: refreshes a `<!-- upkeep:last-synced: DATE -->`
+ * Best-effort mutation: refreshes a `<!-- dc:last-synced: DATE -->`
  * marker comment in README.md. Only touches the marker line (adds one if
  * absent) — never restructures existing content.
  */
@@ -53,8 +53,8 @@ async function refreshReadmeMarker(repoDir: string): Promise<Mutation | null> {
     return null;
   }
 
-  const marker = `<!-- upkeep:last-synced: ${today()} -->`;
-  const markerRe = /<!-- upkeep:last-synced: [\d-]+ -->/;
+  const marker = `<!-- dc:last-synced: ${today()} -->`;
+  const markerRe = /<!-- (?:dc|upkeep):last-synced: [\d-]+ -->/;
 
   const next = markerRe.test(content)
     ? content.replace(markerRe, marker)
@@ -81,12 +81,12 @@ async function readmeExists(repoDir: string): Promise<boolean> {
  * file every time.
  */
 export async function applyRandomMutation(repoDir: string): Promise<Mutation> {
-  const generators: Array<(dir: string) => Promise<Mutation | null>> = [appendUpkeepLog];
+  const generators: Array<(dir: string) => Promise<Mutation | null>> = [appendDailyCommitLog];
   if (await readmeExists(repoDir)) {
     generators.push(refreshReadmeMarker);
   }
 
   const generator = pick(generators);
   const result = await generator(repoDir);
-  return result ?? appendUpkeepLog(repoDir);
+  return result ?? appendDailyCommitLog(repoDir);
 }

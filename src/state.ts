@@ -1,27 +1,33 @@
 import { readFile, writeFile } from "node:fs/promises";
 
-export interface UpkeepState {
+export interface DcState {
   lastRun: Record<string, string>; // `${repo}:${actionType}` -> ISO timestamp
   dailyCount: Record<string, number>; // `YYYY-MM-DD` -> count
 }
 
-const DEFAULT_STATE: UpkeepState = { lastRun: {}, dailyCount: {} };
+const DEFAULT_STATE: DcState = { lastRun: {}, dailyCount: {} };
 
-export async function loadState(path = ".upkeep-state.json"): Promise<UpkeepState> {
-  try {
-    const raw = await readFile(path, "utf8");
-    const parsed = JSON.parse(raw) as Partial<UpkeepState>;
-    return { lastRun: parsed.lastRun ?? {}, dailyCount: parsed.dailyCount ?? {} };
-  } catch {
-    return { ...DEFAULT_STATE };
+const STATE_PATH = ".dc-state.json";
+const LEGACY_STATE_PATH = ".upkeep-state.json";
+
+export async function loadState(path = STATE_PATH): Promise<DcState> {
+  for (const candidate of path === STATE_PATH ? [STATE_PATH, LEGACY_STATE_PATH] : [path]) {
+    try {
+      const raw = await readFile(candidate, "utf8");
+      const parsed = JSON.parse(raw) as Partial<DcState>;
+      return { lastRun: parsed.lastRun ?? {}, dailyCount: parsed.dailyCount ?? {} };
+    } catch {
+      // try next
+    }
   }
+  return { ...DEFAULT_STATE };
 }
 
-export async function saveState(state: UpkeepState, path = ".upkeep-state.json"): Promise<void> {
+export async function saveState(state: DcState, path = STATE_PATH): Promise<void> {
   await writeFile(path, `${JSON.stringify(state, null, 2)}\n`, "utf8");
 }
 
-export function recordAction(state: UpkeepState, repo: string, actionType: string): UpkeepState {
+export function recordAction(state: DcState, repo: string, actionType: string): DcState {
   const now = new Date();
   const key = `${repo}:${actionType}`;
   const dateKey = now.toISOString().slice(0, 10);
@@ -31,12 +37,12 @@ export function recordAction(state: UpkeepState, repo: string, actionType: strin
   };
 }
 
-export function actionsToday(state: UpkeepState): number {
+export function actionsToday(state: DcState): number {
   const dateKey = new Date().toISOString().slice(0, 10);
   return state.dailyCount[dateKey] ?? 0;
 }
 
-export function hoursSinceLastRun(state: UpkeepState, repo: string, actionType: string): number {
+export function hoursSinceLastRun(state: DcState, repo: string, actionType: string): number {
   const key = `${repo}:${actionType}`;
   const last = state.lastRun[key];
   if (!last) return Infinity;
