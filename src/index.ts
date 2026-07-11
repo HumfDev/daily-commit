@@ -100,7 +100,8 @@ function printUsage(): void {
   console.error(`daily commit (dc)
 
 Usage:
-  npx install-daily-commit [dir]   Download, install deps, run onboard
+  npm create daily-commit          Download, install deps, run onboard
+  npm create daily-commit@latest -- my-dir
   dc install [dir]                 Same, from an existing checkout
   dc onboard                       Interactive setup (GitHub account + repos)
   dc run                           Run one daily-commit tick
@@ -109,7 +110,11 @@ Usage:
 
 function invokedAsInstaller(): boolean {
   const bin = basename(process.argv[1] ?? "").replace(/\.(js|mjs|cjs)$/i, "");
-  return bin === "install-daily-commit" || bin === "daily-commit";
+  return (
+    bin === "create-daily-commit" ||
+    bin === "install-daily-commit" ||
+    bin === "daily-commit"
+  );
 }
 
 async function main(): Promise<void> {

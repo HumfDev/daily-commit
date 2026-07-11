@@ -22,7 +22,7 @@ if (existsSync(distEntry)) {
 } else {
   const tsxCli = join(root, "node_modules", "tsx", "dist", "cli.mjs");
   if (!existsSync(tsxCli)) {
-    console.error("install-daily-commit: run npm install && npm run build first.");
+    console.error("create-daily-commit: run npm install && npm run build first.");
     process.exit(1);
   }
   result = spawnSync(process.execPath, [tsxCli, srcEntry, ...forwarded], {

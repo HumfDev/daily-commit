@@ -1,12 +1,12 @@
 {
-  "name": "install-daily-commit",
+  "name": "create-daily-commit",
   "version": "0.1.0",
   "description": "Deterministic, no-AI daily automation that keeps connected repos looking alive: safe commits, PR reviews, pull requests, and issues — driven entirely by git/gh CLI commands, never by model inference.",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "install-daily-commit": "bin/install-daily-commit.cjs",
-    "dc": "bin/install-daily-commit.cjs"
+    "create-daily-commit": "./bin/install-daily-commit.cjs",
+    "dc": "./bin/install-daily-commit.cjs"
   },
   "files": [
     "bin/",

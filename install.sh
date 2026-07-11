@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Prefer:
-#   npx install-daily-commit
-#   npx install-daily-commit my-dir
+#   npm create daily-commit
+#   npm create daily-commit@latest -- my-dir
 set -euo pipefail
 DIR="${1:-daily-commit}"
-echo "→ npx --yes install-daily-commit ${DIR}"
-exec npx --yes install-daily-commit "$DIR"
+echo "→ npm create daily-commit@latest -- ${DIR}"
+exec npm create daily-commit@latest -- "$DIR"

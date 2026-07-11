@@ -57,13 +57,13 @@ entire content-generation surface in `src/templates/` and `src/mutations.ts`.
 ## Quick start (one command)
 
 ```bash
-npx install-daily-commit
+npm create daily-commit
 ```
 
 Optional directory name:
 
 ```bash
-npx install-daily-commit my-daily-commit
+npm create daily-commit@latest -- my-daily-commit
 ```
 
 That downloads the project, installs dependencies, then runs **interactive
@@ -94,7 +94,7 @@ npx dc onboard
 
 ## Setup
 
-1. **Install** via `npx install-daily-commit`, or clone this repo as your control
+1. **Install** via `npm create daily-commit`, or clone this repo as your control
    repo (the workflow runs *here* and acts on repos you select).
 
 2. **Onboard** (`dc onboard`) writes `config.yml` + `repos.yml` for you:
