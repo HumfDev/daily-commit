@@ -57,12 +57,18 @@ entire content-generation surface in `src/templates/` and `src/mutations.ts`.
 ## Quick start (one command)
 
 ```bash
-npx github:HumfDev/daily-commit install my-daily-commit
+npx install-daily-commit
 ```
 
-That clones into `./my-daily-commit`, installs dependencies, then runs
-**interactive terminal onboarding** (stdin prompts only — no custom UI /
-browser login). It will:
+Optional directory name:
+
+```bash
+npx install-daily-commit my-daily-commit
+```
+
+That downloads the project, installs dependencies, then runs **interactive
+terminal onboarding** (stdin prompts only — no custom UI / browser login).
+It will:
 
 1. Accept a GitHub PAT pasted in the terminal (if not already logged in)
 2. Set your commit identity (`gitAuthor` / `gitEmail`)
@@ -74,7 +80,7 @@ browser login). It will:
 Then:
 
 ```bash
-cd my-daily-commit
+cd daily-commit   # or the directory name you chose
 npx dc dry-run
 ```
 
@@ -88,7 +94,7 @@ npx dc onboard
 
 ## Setup
 
-1. **Install** via `npx daily-commit`, or clone this repo as your control
+1. **Install** via `npx install-daily-commit`, or clone this repo as your control
    repo (the workflow runs *here* and acts on repos you select).
 
 2. **Onboard** (`dc onboard`) writes `config.yml` + `repos.yml` for you:

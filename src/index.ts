@@ -100,20 +100,16 @@ function printUsage(): void {
   console.error(`daily commit (dc)
 
 Usage:
-  dc install [dir]       Download this project, install deps, run onboard
-  dc onboard             Interactive setup (GitHub account + repos)
-  dc run                 Run one daily-commit tick
-  dc dry-run             Same as run, without pushing / creating via gh write APIs
-
-One-liner:
-  npx daily-commit
-  npx daily-commit install [dir]
-  npx github:HumfDev/daily-commit install [dir]`);
+  npx install-daily-commit [dir]   Download, install deps, run onboard
+  dc install [dir]                 Same, from an existing checkout
+  dc onboard                       Interactive setup (GitHub account + repos)
+  dc run                           Run one daily-commit tick
+  dc dry-run                       Same as run, without remote write APIs`);
 }
 
 function invokedAsInstaller(): boolean {
   const bin = basename(process.argv[1] ?? "").replace(/\.(js|mjs|cjs)$/i, "");
-  return bin === "daily-commit";
+  return bin === "install-daily-commit" || bin === "daily-commit";
 }
 
 async function main(): Promise<void> {
@@ -154,7 +150,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  // `npx daily-commit my-dir` → install into my-dir
+  // `npx install-daily-commit my-dir` → install into my-dir
   if (invokedAsInstaller() && !command.startsWith("-")) {
     await runInstall(command);
     return;

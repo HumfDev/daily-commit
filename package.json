@@ -1,15 +1,28 @@
 {
-  "name": "daily-commit",
+  "name": "install-daily-commit",
   "version": "0.1.0",
   "description": "Deterministic, no-AI daily automation that keeps connected repos looking alive: safe commits, PR reviews, pull requests, and issues — driven entirely by git/gh CLI commands, never by model inference.",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "dc": "./bin/dc.js",
-    "daily-commit": "./bin/dc.js"
+    "install-daily-commit": "./bin/dc.js",
+    "dc": "./bin/dc.js"
   },
+  "files": [
+    "bin",
+    "dist",
+    "src",
+    "config.yml",
+    "repos.yml",
+    ".github",
+    "README.md",
+    "LICENSE",
+    "package.json",
+    "tsconfig.json"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
