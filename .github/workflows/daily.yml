@@ -26,10 +26,10 @@ jobs:
   tick:
     runs-on: ubuntu-latest
     env:
-      # Takes precedence over the ambient GITHUB_TOKEN for the gh CLI, so
-      # every target-repo operation (clone/push/PR/review/issue) uses this
-      # PAT's broader scope instead of the control-repo-only default token.
-      GH_TOKEN: ${{ secrets.DC_PAT }}
+      # Prefer DC_PAT (user PAT with access to all target repos). Fall back to
+      # the workflow GITHUB_TOKEN so an empty secret never blanks out auth
+      # entirely (that made `gh` think nobody was logged in).
+      GH_TOKEN: ${{ secrets.DC_PAT || github.token }}
     steps:
       - uses: actions/checkout@v4
 
@@ -39,6 +39,14 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      - name: Check auth
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::GH_TOKEN is empty. Add a repository secret named DC_PAT (a PAT with contents/pull-requests/issues write on every repo in repos.yml)."
+            exit 1
+          fi
+          gh auth status
 
       - name: Run daily-commit
         run: npx tsx src/index.ts run ${{ inputs.dry_run && '--dry-run' || '' }}

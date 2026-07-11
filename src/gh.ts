@@ -115,6 +115,12 @@ export async function listOpenIssueTitles(repo: string): Promise<string[]> {
  * can leak into logs or `git remote -v`).
  */
 export async function setupGitCredentialHelper(): Promise<void> {
+  if (!process.env.GH_TOKEN && !process.env.GITHUB_TOKEN) {
+    throw new Error(
+      "No GitHub token found. Set GH_TOKEN, or in Actions add repository secret DC_PAT " +
+        "(PAT with contents/pull-requests/issues write on every repo in repos.yml).",
+    );
+  }
   await gh(["auth", "setup-git"]);
 }
 
