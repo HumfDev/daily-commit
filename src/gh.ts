@@ -168,3 +168,52 @@ export async function listUserRepos(limit = 100): Promise<GhRepoListItem[]> {
   ]);
   return out ? (JSON.parse(out) as GhRepoListItem[]) : [];
 }
+
+export async function getAuthToken(): Promise<string> {
+  const out = await gh(["auth", "token"]);
+  if (!out) throw new Error("gh auth token returned empty — run gh auth login");
+  return out;
+}
+
+export async function repoExists(nameWithOwner: string): Promise<boolean> {
+  const result = await run("gh", ["repo", "view", nameWithOwner, "--json", "name"]);
+  return result.code === 0;
+}
+
+export async function createGithubRepo(
+  nameWithOwner: string,
+  opts: { privateRepo?: boolean; description?: string } = {},
+): Promise<void> {
+  const args = ["repo", "create", nameWithOwner];
+  args.push(opts.privateRepo === false ? "--public" : "--private");
+  if (opts.description) args.push("--description", opts.description);
+  const result = await run("gh", args);
+  if (result.code !== 0) {
+    throw new Error(`gh repo create failed: ${result.stderr || result.stdout}`);
+  }
+}
+
+/** Sets an Actions secret; value is piped on stdin so it never appears in argv. */
+export async function setActionsSecret(
+  nameWithOwner: string,
+  secretName: string,
+  value: string,
+): Promise<void> {
+  const { spawn } = await import("node:child_process");
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn("gh", ["secret", "set", secretName, "--repo", nameWithOwner], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    let stderr = "";
+    child.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
+    child.on("error", reject);
+    child.stdin.write(value);
+    child.stdin.end();
+    child.on("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`gh secret set ${secretName} failed: ${stderr.trim() || `exit ${code}`}`));
+    });
+  });
+}

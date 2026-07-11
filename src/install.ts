@@ -88,7 +88,11 @@ export async function runInstall(targetDir = "daily-commit"): Promise<void> {
 ✓ Install complete.
 
 Directory: ${dest}
-Re-run setup anytime with:  dc onboard
-Dry-run a tick with:        dc dry-run
+
+Commands (from that folder — use npx so macOS's system \`dc\` calculator is not used):
+  cd ${dest}
+  npx dc onboard     # re-run setup
+  npx dc dry-run     # safe test
+  npx dc run         # live tick
 `);
 }

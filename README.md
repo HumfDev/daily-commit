@@ -57,42 +57,32 @@ entire content-generation surface in `src/templates/` and `src/mutations.ts`.
 ## Quick start (one command)
 
 ```bash
-npx daily-commit
+npx github:HumfDev/daily-commit install my-daily-commit
 ```
 
-That downloads this project, installs dependencies, then launches
-**interactive onboarding**: log into GitHub (if needed), confirm your commit
-identity, and pick which repos the bot may access.
+That clones into `./my-daily-commit`, installs dependencies, then runs
+**interactive onboarding** which:
 
-Optional directory:
+1. Logs you into GitHub (if needed)
+2. Sets your commit identity (`gitAuthor` / `gitEmail`)
+3. Lets you multi-select which repos the bot may touch
+4. Creates (or uses) **your** control repo on GitHub
+5. Optionally sets the `DC_PAT` Actions secret from your `gh` login
+6. Pushes config so scheduled Actions can run
+
+Then:
 
 ```bash
-npx daily-commit my-daily-commit
+cd my-daily-commit
+npx dc dry-run
 ```
 
-From GitHub directly (no npm publish required):
+(Use `npx dc` — bare `dc` is macOS’s calculator.)
+
+Already have a clone?
 
 ```bash
-npx github:HumfDev/daily-commit install
-```
-
-### CLI (`dc`)
-
-After install, use the `dc` prefix for everything:
-
-```bash
-dc install [dir]    # download + onboard
-dc onboard          # re-run interactive setup
-dc run              # one live tick
-dc dry-run          # one tick without remote writes
-dc help
-```
-
-Link the local bin (from this repo) with:
-
-```bash
-npm install
-npm link            # puts `dc` on your PATH
+npx dc onboard
 ```
 
 ## Setup
