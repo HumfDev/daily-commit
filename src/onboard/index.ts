@@ -6,12 +6,12 @@ import {
   getAuthenticatedUser,
   isGhAuthenticated,
   listUserRepos,
-  loginGhInteractively,
+  loginWithToken,
   repoExists,
   setActionsSecret,
 } from "../gh.js";
 import { run, runInherit } from "../exec.js";
-import { ask, confirm, selectIndices } from "../prompt.js";
+import { ask, askSecret, confirm, selectIndices } from "../prompt.js";
 import {
   buildRepoEntries,
   defaultGitAuthor,
@@ -38,16 +38,28 @@ async function ensureAuthenticated(): Promise<void> {
     console.log("✓ Already logged into GitHub CLI");
     return;
   }
-  console.log("\nYou need to log into GitHub so we can list your repos and set your identity.");
-  const ok = await confirm("Start `gh auth login` now?", true);
-  if (!ok) {
-    throw new Error("GitHub authentication is required to continue onboarding.");
+
+  console.log(`
+GitHub authentication (terminal only)
+-------------------------------------
+A browser login UI will NOT be opened.
+
+1. Create a token at: https://github.com/settings/tokens
+   - Classic PAT: enable scopes  repo  and  workflow
+   - Or fine-grained: Contents + Pull requests + Issues (read/write)
+     on every repo you will select, plus your control repo
+2. Paste the token below (input is masked).
+`);
+
+  const token = await askSecret("Paste GitHub token");
+  if (!token) {
+    throw new Error("A GitHub token is required to continue onboarding.");
   }
-  await loginGhInteractively();
+  await loginWithToken(token);
   if (!(await isGhAuthenticated())) {
-    throw new Error("Still not authenticated after gh auth login.");
+    throw new Error("Still not authenticated after token login.");
   }
-  console.log("✓ Logged into GitHub CLI");
+  console.log("✓ Logged into GitHub CLI (token)");
 }
 
 async function fileExists(path: string): Promise<boolean> {
@@ -221,6 +233,8 @@ export async function runOnboard(cwd = process.cwd()): Promise<void> {
   console.log(`
 daily commit onboarding
 -----------------------
+All steps run in this terminal (stdin/stdout prompts only — no custom UI).
+
 This will configure everything needed to run:
   • your GitHub account (commit author identity)
   • which repos the bot may touch

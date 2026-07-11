@@ -61,14 +61,15 @@ npx github:HumfDev/daily-commit install my-daily-commit
 ```
 
 That clones into `./my-daily-commit`, installs dependencies, then runs
-**interactive onboarding** which:
+**interactive terminal onboarding** (stdin prompts only — no custom UI /
+browser login). It will:
 
-1. Logs you into GitHub (if needed)
-2. Sets your commit identity (`gitAuthor` / `gitEmail`)
-3. Lets you multi-select which repos the bot may touch
-4. Creates (or uses) **your** control repo on GitHub
-5. Optionally sets the `DC_PAT` Actions secret from your `gh` login
-6. Pushes config so scheduled Actions can run
+1. Accept a GitHub PAT pasted in the terminal (if not already logged in)
+2. Set your commit identity (`gitAuthor` / `gitEmail`)
+3. Let you multi-select which repos the bot may touch
+4. Create (or use) **your** control repo on GitHub
+5. Optionally set the `DC_PAT` Actions secret from your `gh` login
+6. Push config so scheduled Actions can run
 
 Then:
 

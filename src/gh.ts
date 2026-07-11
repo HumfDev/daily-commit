@@ -1,4 +1,4 @@
-import { run, runInherit } from "./exec.js";
+import { run } from "./exec.js";
 
 export interface OpenPR {
   number: number;
@@ -133,10 +133,35 @@ export async function isGhAuthenticated(): Promise<boolean> {
   return result.code === 0;
 }
 
-export async function loginGhInteractively(): Promise<void> {
-  const code = await runInherit("gh", ["auth", "login"]);
-  if (code !== 0) {
-    throw new Error("gh auth login failed or was cancelled");
+/**
+ * Terminal-only login: pipes a PAT into `gh auth login --with-token`.
+ * Does not open a browser or the interactive gh TUI.
+ */
+export async function loginWithToken(token: string): Promise<void> {
+  const { spawn } = await import("node:child_process");
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(
+      "gh",
+      ["auth", "login", "--hostname", "github.com", "--with-token"],
+      { stdio: ["pipe", "pipe", "pipe"] },
+    );
+    let stderr = "";
+    child.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
+    child.on("error", reject);
+    child.stdin.write(token.trim() + "\n");
+    child.stdin.end();
+    child.on("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`gh auth login --with-token failed: ${stderr.trim() || `exit ${code}`}`));
+    });
+  });
+
+  // Prefer HTTPS git + credential helper, still non-interactive.
+  const setup = await run("gh", ["auth", "setup-git"]);
+  if (setup.code !== 0) {
+    throw new Error(`gh auth setup-git failed: ${setup.stderr}`);
   }
 }
 
