@@ -1,4 +1,4 @@
-# repo-upkeep
+# daily-commit
 
 Automated, **no-AI** daily maintenance for GitHub repos: safe commits, PR
 reviews, pull requests, and issues — generated entirely by deterministic
