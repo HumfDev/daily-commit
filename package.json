@@ -5,19 +5,18 @@
   "type": "module",
   "license": "MIT",
   "bin": {
-    "install-daily-commit": "./bin/dc.js",
-    "dc": "./bin/dc.js"
+    "install-daily-commit": "bin/install-daily-commit.cjs",
+    "dc": "bin/install-daily-commit.cjs"
   },
   "files": [
-    "bin",
-    "dist",
-    "src",
+    "bin/",
+    "dist/",
+    "src/",
     "config.yml",
     "repos.yml",
-    ".github",
+    ".github/",
     "README.md",
     "LICENSE",
-    "package.json",
     "tsconfig.json"
   ],
   "scripts": {

@@ -1,13 +1,14 @@
 #!/usr/bin/env node
+"use strict";
 /**
- * `dc` / `daily-commit` bin shim: prefers compiled dist/, falls back to tsx.
+ * CJS launcher for npx/npm bin (most reliable across npm versions).
+ * Prefer compiled dist/; fall back to tsx for source checkouts.
  */
-import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+const { spawnSync } = require("node:child_process");
+const { existsSync } = require("node:fs");
+const { dirname, join } = require("node:path");
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const root = join(__dirname, "..");
 const distEntry = join(root, "dist", "index.js");
 const srcEntry = join(root, "src", "index.ts");
 const forwarded = process.argv.slice(2);
@@ -21,7 +22,7 @@ if (existsSync(distEntry)) {
 } else {
   const tsxCli = join(root, "node_modules", "tsx", "dist", "cli.mjs");
   if (!existsSync(tsxCli)) {
-    console.error("dc: run `npm install` (and optionally `npm run build`) first.");
+    console.error("install-daily-commit: run npm install && npm run build first.");
     process.exit(1);
   }
   result = spawnSync(process.execPath, [tsxCli, srcEntry, ...forwarded], {
