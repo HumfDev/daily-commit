@@ -183,8 +183,38 @@ export interface GhRepoListItem {
   nameWithOwner: string;
   isPrivate: boolean;
   description: string | null;
+  ownerLogin: string;
 }
 
+/** Repos owned by `login` (not org/collaborator repos under other owners). */
+export async function listOwnedRepos(login: string, limit = 100): Promise<GhRepoListItem[]> {
+  const out = await gh([
+    "repo",
+    "list",
+    "--limit",
+    String(limit),
+    "--json",
+    "nameWithOwner,isPrivate,description,owner",
+  ]);
+  type Raw = {
+    nameWithOwner: string;
+    isPrivate: boolean;
+    description: string | null;
+    owner: { login: string };
+  };
+  const all = out ? (JSON.parse(out) as Raw[]) : [];
+  const owner = login.toLowerCase();
+  return all
+    .filter((r) => r.owner.login.toLowerCase() === owner)
+    .map((r) => ({
+      nameWithOwner: r.nameWithOwner,
+      isPrivate: r.isPrivate,
+      description: r.description,
+      ownerLogin: r.owner.login,
+    }));
+}
+
+/** @deprecated Use listOwnedRepos — gh repo list includes collaborator/org repos by default. */
 export async function listUserRepos(limit = 100): Promise<GhRepoListItem[]> {
   const out = await gh([
     "repo",
@@ -192,9 +222,21 @@ export async function listUserRepos(limit = 100): Promise<GhRepoListItem[]> {
     "--limit",
     String(limit),
     "--json",
-    "nameWithOwner,isPrivate,description",
+    "nameWithOwner,isPrivate,description,owner",
   ]);
-  return out ? (JSON.parse(out) as GhRepoListItem[]) : [];
+  type Raw = {
+    nameWithOwner: string;
+    isPrivate: boolean;
+    description: string | null;
+    owner: { login: string };
+  };
+  const all = out ? (JSON.parse(out) as Raw[]) : [];
+  return all.map((r) => ({
+    nameWithOwner: r.nameWithOwner,
+    isPrivate: r.isPrivate,
+    description: r.description,
+    ownerLogin: r.owner.login,
+  }));
 }
 
 export async function getAuthToken(): Promise<string> {

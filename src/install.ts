@@ -1,8 +1,8 @@
 import { access, mkdir } from "node:fs/promises";
 import { constants } from "node:fs";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { run, runInherit } from "./exec.js";
-import { runOnboard } from "./onboard/index.js";
 
 /** Source repo cloned into the user's machine during `dc install`. */
 export const SOURCE_REPO = process.env.DC_REPO ?? "HumfDev/daily-commit";
@@ -82,7 +82,9 @@ export async function runInstall(targetDir = "daily-commit"): Promise<void> {
   const prev = process.cwd();
   process.chdir(dest);
   try {
-    await runOnboard(dest);
+    // Use the cloned repo's built onboard (matches GitHub main), not the npx cache version.
+    const onboardModule = await import(pathToFileURL(resolve(dest, "dist/onboard/index.js")).href);
+    await onboardModule.runOnboard(dest);
   } finally {
     process.chdir(prev);
   }

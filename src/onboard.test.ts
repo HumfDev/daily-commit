@@ -8,6 +8,7 @@ import {
   renderConfigYaml,
   renderReposYaml,
 } from "./onboard/configWrite.js";
+import { excludedOnboardingRepos, filterReposForOnboarding } from "./onboard/repos.js";
 import { loadConfig } from "./config.js";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -27,6 +28,23 @@ describe("parseSelection", () => {
     expect(parseSelection("0", 3)).toBeNull();
     expect(parseSelection("4", 3)).toBeNull();
     expect(parseSelection("3-1", 5)).toBeNull();
+  });
+});
+
+describe("onboard repo filter", () => {
+  it("keeps only repos owned by the user and drops installer artifacts", () => {
+    const login = "ada";
+    const repos = [
+      { nameWithOwner: "ada/project", isPrivate: false, description: null, ownerLogin: "ada" },
+      { nameWithOwner: "ada/my-daily-commit", isPrivate: true, description: null, ownerLogin: "ada" },
+      { nameWithOwner: "HumfDev/daily-commit", isPrivate: false, description: null, ownerLogin: "HumfDev" },
+      { nameWithOwner: "org/shared", isPrivate: false, description: null, ownerLogin: "org" },
+    ];
+    const filtered = filterReposForOnboarding(login, repos, "HumfDev/daily-commit");
+    expect(filtered.map((r) => r.nameWithOwner)).toEqual(["ada/project"]);
+    expect(excludedOnboardingRepos("ada", "HumfDev/daily-commit")).toEqual(
+      new Set(["humfdev/daily-commit", "ada/my-daily-commit"]),
+    );
   });
 });
 

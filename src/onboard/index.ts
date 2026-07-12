@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import {
   getAuthenticatedUser,
   isGhAuthenticated,
-  listUserRepos,
+  listOwnedRepos,
   loginWithToken,
 } from "../gh.js";
 import { run, runInherit } from "../exec.js";
@@ -18,6 +18,7 @@ import {
   renderReposYaml,
   type ListedRepo,
 } from "./configWrite.js";
+import { filterReposForOnboarding } from "./repos.js";
 
 async function ensureGhCli(): Promise<void> {
   const result = await run("gh", ["--version"]);
@@ -74,31 +75,17 @@ function formatRepoLabel(repo: ListedRepo): string {
 
 async function pickRepos(listed: ListedRepo[]): Promise<string[]> {
   if (listed.length === 0) {
-    console.log("\nNo repos returned by `gh repo list`.");
-  } else {
-    const indices = await selectIndices(
-      "Select target repos daily-commit may act on (commits/PRs/reviews/issues):",
-      listed.map(formatRepoLabel),
+    throw new Error(
+      "No owned repositories found for your account (excluding the daily-commit installer repo). " +
+        "Create a repo on GitHub first, then re-run onboard.",
     );
-    const selected = indices.map((i) => listed[i]!.nameWithOwner);
-
-    const addMore = await confirm("Add another repo by owner/name (not in the list)?", false);
-    if (!addMore) return selected;
-
-    const extra = await ask("Extra repo (owner/name, or empty to skip)");
-    if (extra && /^[\w.-]+\/[\w.-]+$/.test(extra)) {
-      if (!selected.includes(extra)) selected.push(extra);
-    } else if (extra) {
-      console.log(`Skipping invalid repo name: ${extra}`);
-    }
-    return selected;
   }
 
-  const manual = await ask("Enter a repo as owner/name (required)");
-  if (!manual || !/^[\w.-]+\/[\w.-]+$/.test(manual)) {
-    throw new Error("At least one valid owner/name repo is required.");
-  }
-  return [manual];
+  const indices = await selectIndices(
+    "Select your repos for daily-commit to act on (commits/PRs/reviews/issues):",
+    listed.map(formatRepoLabel),
+  );
+  return indices.map((i) => listed[i]!.nameWithOwner);
 }
 
 async function offerCronInstall(cwd: string): Promise<boolean> {
@@ -128,7 +115,7 @@ All steps run in this terminal (stdin/stdout prompts only — no custom UI).
 
 This will configure everything needed to run locally:
   • your GitHub account (commit author identity)
-  • which repos the bot may touch
+  • which of your repos the bot may touch
   • optional local cron schedule (your machine must be on)
 `);
 
@@ -141,8 +128,17 @@ This will configure everything needed to run locally:
   const gitAuthor = await ask("Commit author name", defaultGitAuthor(user));
   const gitEmail = await ask("Commit author email", noreplyEmail(user));
 
-  console.log("\nFetching your repositories…");
-  const listed = await listUserRepos(100);
+  console.log("\nFetching repositories you own…");
+  const allOwned = await listOwnedRepos(user.login, 100);
+  const listed = filterReposForOnboarding(user.login, allOwned);
+
+  if (listed.length === 0) {
+    throw new Error(
+      `No eligible repos under ${user.login} (installer/control repos are excluded). ` +
+        "Create a project repo on GitHub, then re-run onboard.",
+    );
+  }
+
   const repoNames = await pickRepos(listed);
 
   if (repoNames.length === 0) {

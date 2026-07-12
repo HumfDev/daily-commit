@@ -1,6 +1,6 @@
 {
   "name": "daily-commit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scaffold and run daily-commit: deterministic, no-AI GitHub repo maintenance via git/gh.",
   "type": "module",
   "license": "MIT",
