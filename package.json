@@ -5,8 +5,8 @@
   "type": "module",
   "license": "MIT",
   "bin": {
-    "create-daily-commit": "./dist/index.js",
-    "dc": "./dist/index.js"
+    "create-daily-commit": "dist/index.js",
+    "dc": "dist/index.js"
   },
   "files": [
     "dist/",

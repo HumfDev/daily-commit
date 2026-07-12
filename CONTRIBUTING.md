@@ -52,12 +52,17 @@ That mirrors how Python projects ship a global CLI via PyPI (`pipx install dcad`
 2. Claim the package name by publishing once (or create the package on npmjs.com)
 3. Pick **one** auth method for CI:
 
-**Option A — Access token (simplest, like `PYPI_API_TOKEN`)**
+**Option A — Access token (required for first publish)**
 
-- npm → Access Tokens → generate Automation token
-- GitHub repo → Settings → Secrets → Actions → New secret  
-  - Name: `NPM_TOKEN`  
-  - Value: the token
+npm granular tokens often **cannot create a brand-new package** (403 Forbidden).
+For CI, prefer a **classic Automation** token:
+
+1. npmjs.com → Access Tokens → Generate New Token → **Automation**
+2. GitHub repo → Settings → Secrets → Actions → `NPM_TOKEN` = that token
+
+If you insist on granular: grant **Read and write** to packages, and allow
+publishing **new packages** under your user. A read-only or package-scoped
+token that doesn't include `create-daily-commit` yet will fail with 403.
 
 **Option B — Trusted Publishing / OIDC (no long-lived token)**
 
