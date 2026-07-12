@@ -5,4 +5,6 @@ dist/
 .DS_Store
 .tmp/
 .dc-cache/
+.dc-state.json
+.upkeep-state.json
 *.tgz

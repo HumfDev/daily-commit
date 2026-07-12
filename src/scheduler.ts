@@ -8,8 +8,8 @@ export interface TickDecision {
 }
 
 /**
- * Decides whether THIS invocation of the workflow does anything at all.
- * The workflow itself ticks on a fixed cron, but gating here — quiet hours,
+ * Decides whether THIS cron invocation does anything at all.
+ * Cron may tick every 2 hours, but gating here — quiet hours,
  * a daily cap, and a random roll — is what makes the actual activity land
  * at unpredictable times instead of every single tick.
  */

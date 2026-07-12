@@ -1,7 +1,7 @@
-# List of target repositories this control repo is allowed to act on.
+# Target repositories daily-commit may act on.
 # Each entry configures which actions are enabled and any per-repo overrides.
 #
-# The token in the DC_PAT secret must have `contents`, `pull-requests`, and
+# Your `gh` login (or GH_TOKEN) must have `contents`, `pull-requests`, and
 # `issues` write access to every repo listed here.
 
 repos:
@@ -11,21 +11,9 @@ repos:
       pull_request: true
       review: true
       issue: true
-    # Optional: glob paths this bot may touch in THIS repo. Overrides the
-    # global safePaths in config.yml when set.
     safePaths:
       - "docs/**"
       - "*.md"
       - "CHANGELOG.md"
-    # Optional: command run inside a clone of the repo to verify a change
-    # didn't break anything before it's committed/pushed. Non-zero exit
-    # aborts the action with no changes made.
-    # Omitted for this test repo — it has no package.json / npm test suite.
-    # For real Node projects, set e.g. verifyCommand: "npm test --silent"
-
-  # - repo: "your-username/another-project"
-  #   actions:
-  #     commit: true
-  #     pull_request: false
-  #     review: true
-  #     issue: true
+    # Optional: command run inside a clone before push. Non-zero exit aborts.
+    # verifyCommand: "npm test --silent"

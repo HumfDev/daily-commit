@@ -7,6 +7,8 @@ prompts, no model API keys, anywhere in this codebase.
 
 CLI: **`dc`** (short for daily commit).
 
+Runs on **your machine** via local cron (like [commit-bot](https://github.com/theshteves/commit-bot)) — no GitHub Actions, no per-user control repo.
+
 ## What it actually does
 
 Once a day-ish (randomized — see below), for one repo you've listed in
@@ -44,10 +46,11 @@ entire content-generation surface in `src/templates/` and `src/mutations.ts`.
 
 ## Looking organic, not robotic
 
-- The workflow ticks every 2 hours, but `src/scheduler.ts` gates each tick
-  behind `runProbability`, `quietHours`, and `maxActionsPerDay` from
-  `config.yml` — so real activity lands at unpredictable times, not a fixed
-  clock.
+- Cron ticks every 2 hours, but `src/scheduler.ts` gates each tick behind
+  `runProbability`, `quietHours`, and `maxActionsPerDay` from `config.yml` —
+  so real activity lands at unpredictable times, not a fixed clock.
+- If your laptop is off at cron time, that tick is skipped (same idea as
+  commit-bot — gaps look natural).
 - `src/picker.ts` weighted-randomly picks which repo and which action type
   runs (including "noop"), respecting a per-action cooldown so the same repo
   doesn't get reviewed twice in a day.
@@ -55,8 +58,6 @@ entire content-generation surface in `src/templates/` and `src/mutations.ts`.
   comment is drawn from a randomized template pool in `src/templates/`.
 
 ## Quick start (one command)
-
-After this package is on npm:
 
 ```bash
 npx daily-commit
@@ -68,14 +69,14 @@ Optional directory name:
 npx daily-commit@latest -- my-daily-commit
 ```
 
-Until then (from GitHub directly):
+Or from GitHub directly (no npm publish needed):
 
 ```bash
 npx github:HumfDev/daily-commit
 ```
 
-That downloads the project, installs dependencies, then runs **interactive
-terminal onboarding** (stdin prompts only — no custom UI / browser login).
+That downloads the project, installs dependencies, runs onboarding, and
+optionally installs local cron.
 
 Then:
 
@@ -90,41 +91,46 @@ Publishing this package to npm: see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Setup
 
-1. **Install** via `npx daily-commit`, or clone this repo as your control
-   repo (the workflow runs *here* and acts on repos you select).
+1. **Install** via `npx daily-commit` (or clone this repo and run `npx dc onboard`).
 
-2. **Onboard** (`dc onboard`) writes `config.yml` + `repos.yml` for you:
+2. **Onboard** (`dc onboard`) writes `config.yml` + `repos.yml`:
    - GitHub account → `gitAuthor` / `gitEmail` (commits attribute to you)
    - Multi-select your repos (or type `owner/name`)
+   - Optional: install cron (`scripts/install-cron.sh`)
 
-   You can still edit those files by hand afterward.
+3. **Authenticate** with GitHub CLI (`gh auth login`) or set `GH_TOKEN`.
+   The token needs `contents`, `pull-requests`, and `issues` **write** on
+   every repo in `repos.yml`.
 
-3. **Create a fine-grained GitHub PAT** with `contents`, `pull-requests`, and
-   `issues` **write** access scoped to every repo listed in `repos.yml` (and
-   to this control repo itself, if you want it to persist run history — see
-   below). Add it as a repository secret named `DC_PAT`. The PAT should
-   belong to the same GitHub user set as the commit author.
-
-4. **Push.** The included workflow (`.github/workflows/daily.yml`) starts
-   ticking on its cron automatically. Trigger it manually any time from the
-   Actions tab (`workflow_dispatch`), optionally with `dry_run: true`.
-
-### Local dry run
+4. **Schedule** local cron (onboarding offers this, or run manually):
 
 ```bash
-dc dry-run
+bash scripts/install-cron.sh
+```
+
+Default schedule: every 2 hours at `:17`. Logs go to `daily-commit.log` in
+your install folder.
+
+Remove cron:
+
+```bash
+bash scripts/uninstall-cron.sh
+```
+
+### Manual run
+
+```bash
+npx dc dry-run   # safe — no remote writes
+npx dc run       # live tick
 ```
 
 ## Config reference
 
-- **`config.yml`** — global scheduling/randomization knobs: `runProbability`,
+- **`config.yml`** — global scheduling/randomization: `runProbability`,
   `quietHours`, `maxActionsPerDay`, `actionWeights`, default `safePaths`,
-  `cooldownHours`, plus required `gitAuthor` / `gitEmail` (your GitHub
-  identity so commits attribute to your account). Prefer `dc onboard`
-  to generate this file.
-- **`repos.yml`** — the list of repos this control repo may act on, with
-  per-repo action toggles, `safePaths` override, and optional
-  `verifyCommand`. Prefer `dc onboard` to select repos interactively.
+  `cooldownHours`, plus `gitAuthor` / `gitEmail`.
+- **`repos.yml`** — target repos with per-repo action toggles, `safePaths`
+  override, and optional `verifyCommand`.
 
 ## Safety model
 
@@ -139,10 +145,9 @@ dc dry-run
 
 ## State
 
-`.dc-state.json` in this control repo tracks the last run time per
-repo+action and today's action count, so `maxActionsPerDay` and
-`cooldownHours` are enforced across ticks. It's committed back automatically
-using the workflow's default `GITHUB_TOKEN` (`contents: write` permission).
+`.dc-state.json` in your install directory tracks the last run time per
+repo+action and today's action count (`maxActionsPerDay`, `cooldownHours`).
+It stays local — not committed to GitHub.
 
 ## Future work
 

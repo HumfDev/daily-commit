@@ -6,7 +6,6 @@ import { runPullRequestAction, type PullRequestOutcome } from "./actions/pullreq
 import { runReviewAction, type ReviewOutcome } from "./actions/review.js";
 import { loadConfig, type ActionType, type GlobalConfig, type RepoEntry } from "./config.js";
 import { setupGitCredentialHelper } from "./gh.js";
-import { addPath, commit as gitCommit, configureIdentity, currentBranch, push } from "./git.js";
 import { runInstall } from "./install.js";
 import { runOnboard } from "./onboard/index.js";
 import { pickRepoAndAction } from "./picker.js";
@@ -46,20 +45,10 @@ async function dispatch(
   }
 }
 
-async function persistState(
-  repo: string,
-  actionType: ActionType,
-  identity: GitIdentity,
-): Promise<void> {
+async function recordState(repo: string, actionType: ActionType): Promise<void> {
   const state = await loadState();
   const next = recordAction(state, repo, actionType);
   await saveState(next);
-
-  await configureIdentity(identity.name, identity.email, { cwd: process.cwd() });
-  await addPath(".dc-state.json", { cwd: process.cwd() });
-  await gitCommit(`chore: record daily-commit run (${repo} ${actionType})`, { cwd: process.cwd() });
-  const branch = await currentBranch({ cwd: process.cwd() });
-  await push(branch, { cwd: process.cwd() });
 }
 
 async function runCommand(dryRun: boolean): Promise<void> {
@@ -89,7 +78,7 @@ async function runCommand(dryRun: boolean): Promise<void> {
   console.log("[result]", JSON.stringify(outcome, null, 2));
 
   if (!dryRun && outcome.performed) {
-    await persistState(selection.repo.repo, selection.actionType, identity);
+    await recordState(selection.repo.repo, selection.actionType);
     console.log(
       `[state] recorded run (today's total: ${actionsToday(await loadState()) }/${global.maxActionsPerDay})`,
     );

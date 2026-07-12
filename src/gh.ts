@@ -116,10 +116,13 @@ export async function listOpenIssueTitles(repo: string): Promise<string[]> {
  */
 export async function setupGitCredentialHelper(): Promise<void> {
   if (!process.env.GH_TOKEN && !process.env.GITHUB_TOKEN) {
-    throw new Error(
-      "No GitHub token found. Set GH_TOKEN, or in Actions add repository secret DC_PAT " +
-        "(PAT with contents/pull-requests/issues write on every repo in repos.yml).",
-    );
+    if (await isGhAuthenticated()) {
+      process.env.GH_TOKEN = await getAuthToken();
+    } else {
+      throw new Error(
+        "No GitHub token found. Run `gh auth login`, set GH_TOKEN, or ensure cron uses GH_TOKEN=$(gh auth token).",
+      );
+    }
   }
   await gh(["auth", "setup-git"]);
 }
@@ -198,47 +201,4 @@ export async function getAuthToken(): Promise<string> {
   const out = await gh(["auth", "token"]);
   if (!out) throw new Error("gh auth token returned empty — run gh auth login");
   return out;
-}
-
-export async function repoExists(nameWithOwner: string): Promise<boolean> {
-  const result = await run("gh", ["repo", "view", nameWithOwner, "--json", "name"]);
-  return result.code === 0;
-}
-
-export async function createGithubRepo(
-  nameWithOwner: string,
-  opts: { privateRepo?: boolean; description?: string } = {},
-): Promise<void> {
-  const args = ["repo", "create", nameWithOwner];
-  args.push(opts.privateRepo === false ? "--public" : "--private");
-  if (opts.description) args.push("--description", opts.description);
-  const result = await run("gh", args);
-  if (result.code !== 0) {
-    throw new Error(`gh repo create failed: ${result.stderr || result.stdout}`);
-  }
-}
-
-/** Sets an Actions secret; value is piped on stdin so it never appears in argv. */
-export async function setActionsSecret(
-  nameWithOwner: string,
-  secretName: string,
-  value: string,
-): Promise<void> {
-  const { spawn } = await import("node:child_process");
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn("gh", ["secret", "set", secretName, "--repo", nameWithOwner], {
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-    let stderr = "";
-    child.stderr.on("data", (chunk: Buffer) => {
-      stderr += chunk.toString();
-    });
-    child.on("error", reject);
-    child.stdin.write(value);
-    child.stdin.end();
-    child.on("close", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`gh secret set ${secretName} failed: ${stderr.trim() || `exit ${code}`}`));
-    });
-  });
 }

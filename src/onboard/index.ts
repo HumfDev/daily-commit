@@ -1,14 +1,11 @@
 import { access, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
+import { resolve } from "node:path";
 import {
-  createGithubRepo,
-  getAuthToken,
   getAuthenticatedUser,
   isGhAuthenticated,
   listUserRepos,
   loginWithToken,
-  repoExists,
-  setActionsSecret,
 } from "../gh.js";
 import { run, runInherit } from "../exec.js";
 import { ask, askSecret, confirm, selectIndices } from "../prompt.js";
@@ -21,8 +18,6 @@ import {
   renderReposYaml,
   type ListedRepo,
 } from "./configWrite.js";
-
-const TEMPLATE_REPO = process.env.DC_REPO ?? "HumfDev/daily-commit";
 
 async function ensureGhCli(): Promise<void> {
   const result = await run("gh", ["--version"]);
@@ -45,9 +40,9 @@ GitHub authentication (terminal only)
 A browser login UI will NOT be opened.
 
 1. Create a token at: https://github.com/settings/tokens
-   - Classic PAT: enable scopes  repo  and  workflow
+   - Classic PAT: enable scope  repo
    - Or fine-grained: Contents + Pull requests + Issues (read/write)
-     on every repo you will select, plus your control repo
+     on every repo you will select
 2. Paste the token below (input is masked).
 `);
 
@@ -106,127 +101,23 @@ async function pickRepos(listed: ListedRepo[]): Promise<string[]> {
   return [manual];
 }
 
-async function git(cwd: string, args: string[]): Promise<string> {
-  const result = await run("git", args, { cwd });
-  if (result.code !== 0) {
-    throw new Error(`git ${args.join(" ")} failed: ${result.stderr || result.stdout}`);
-  }
-  return result.stdout.trim();
-}
-
-async function currentOriginRepo(cwd: string): Promise<string | null> {
-  const result = await run("git", ["remote", "get-url", "origin"], { cwd });
-  if (result.code !== 0) return null;
-  const url = result.stdout.trim();
-  const m =
-    url.match(/github\.com[:/](?<owner>[\w.-]+)\/(?<name>[\w.-]+?)(?:\.git)?$/i) ??
-    url.match(/github\.com\/(?<owner>[\w.-]+)\/(?<name>[\w.-]+)/i);
-  if (!m?.groups) return null;
-  return `${m.groups.owner}/${m.groups.name.replace(/\.git$/, "")}`;
-}
-
-/**
- * Ensures this install has a control repo under the user's account (not the
- * public template), commits config, pushes, and sets DC_PAT for Actions.
- */
-async function setupControlRepo(
-  cwd: string,
-  login: string,
-): Promise<{ controlRepo: string; pushed: boolean; secretSet: boolean }> {
-  console.log(`
-Control repo
-------------
-daily-commit needs its own GitHub repo under *your* account to run Actions.
-(The template ${TEMPLATE_REPO} is only the installer source.)
-`);
-
-  const defaultName =
-    `${login}/daily-commit`.toLowerCase() === TEMPLATE_REPO.toLowerCase()
-      ? `${login}/my-daily-commit`
-      : `${login}/daily-commit`;
-  let controlRepo = await ask("Control repo (owner/name)", defaultName);
-  if (!/^[\w.-]+\/[\w.-]+$/.test(controlRepo)) {
-    throw new Error(`Invalid control repo '${controlRepo}'`);
+async function offerCronInstall(cwd: string): Promise<boolean> {
+  const script = resolve(cwd, "scripts/install-cron.sh");
+  if (!(await fileExists(script))) {
+    console.log("• scripts/install-cron.sh not found — add cron manually (see README)");
+    return false;
   }
 
-  const origin = await currentOriginRepo(cwd);
-  const isTemplateOrigin =
-    origin !== null && origin.toLowerCase() === TEMPLATE_REPO.toLowerCase();
-
-  if (!(await repoExists(controlRepo))) {
-    const create = await confirm(`Create private GitHub repo ${controlRepo} now?`, true);
-    if (!create) {
-      throw new Error(`Create ${controlRepo} on GitHub, then re-run: npx dc onboard`);
-    }
-    const isPrivate = await confirm("Make the control repo private?", true);
-    await createGithubRepo(controlRepo, {
-      privateRepo: isPrivate,
-      description: "daily-commit control repo",
-    });
-    console.log(`✓ Created ${controlRepo}`);
-  } else {
-    console.log(`✓ Using existing ${controlRepo}`);
+  if (!(await confirm("Install local cron to run daily-commit every 2 hours?", true))) {
+    return false;
   }
 
-  // Point origin at the user's control repo (keep template as upstream if present).
-  if (isTemplateOrigin) {
-    const hasUpstream = (await run("git", ["remote", "get-url", "upstream"], { cwd })).code === 0;
-    if (!hasUpstream) {
-      await git(cwd, ["remote", "rename", "origin", "upstream"]);
-    } else {
-      await git(cwd, ["remote", "remove", "origin"]);
-    }
-    await git(cwd, ["remote", "add", "origin", `https://github.com/${controlRepo}.git`]);
-  } else if (!origin) {
-    await git(cwd, ["remote", "add", "origin", `https://github.com/${controlRepo}.git`]);
-  } else if (origin.toLowerCase() !== controlRepo.toLowerCase()) {
-    await git(cwd, ["remote", "set-url", "origin", `https://github.com/${controlRepo}.git`]);
+  const code = await runInherit("bash", [script], { cwd });
+  if (code !== 0) {
+    console.log("• Cron install failed — run manually: bash scripts/install-cron.sh");
+    return false;
   }
-
-  await git(cwd, ["add", "config.yml", "repos.yml"]);
-  const staged = await run("git", ["diff", "--cached", "--quiet"], { cwd });
-  if (staged.code !== 0) {
-    // something staged
-    await git(cwd, ["config", "user.email", "noreply@users.noreply.github.com"]);
-    await git(cwd, ["config", "user.name", "daily-commit"]);
-    await git(cwd, ["commit", "-m", "chore: configure daily-commit via onboard"]);
-    console.log("✓ Committed config.yml + repos.yml");
-  } else {
-    // maybe nothing to commit if identical — still try add/status
-    console.log("• No config changes to commit (already up to date)");
-  }
-
-  let pushed = false;
-  if (await confirm(`Push to ${controlRepo} and enable Actions?`, true)) {
-    // Prefer pushing current HEAD to main on a fresh control repo.
-    let pushCode = await runInherit("git", ["push", "-u", "origin", "HEAD:main"], { cwd });
-    if (pushCode !== 0) {
-      pushCode = await runInherit("git", ["push", "-u", "origin", "HEAD"], { cwd });
-    }
-    if (pushCode !== 0) {
-      throw new Error(
-        `git push to ${controlRepo} failed. Fix the remote, push manually, then run: npx dc onboard`,
-      );
-    }
-    pushed = true;
-    console.log(`✓ Pushed to https://github.com/${controlRepo}`);
-  }
-
-  let secretSet = false;
-  if (
-    await confirm(
-      "Store your current gh login as Actions secret DC_PAT on the control repo?\n" +
-        "  (Needed so scheduled runs can commit/PR/review/issue on your target repos.)",
-      true,
-    )
-  ) {
-    const token = await getAuthToken();
-    await setActionsSecret(controlRepo, "DC_PAT", token);
-    secretSet = true;
-    console.log("✓ Set Actions secret DC_PAT");
-  }
-
-  return { controlRepo, pushed, secretSet };
+  return true;
 }
 
 export async function runOnboard(cwd = process.cwd()): Promise<void> {
@@ -235,10 +126,10 @@ daily commit onboarding
 -----------------------
 All steps run in this terminal (stdin/stdout prompts only — no custom UI).
 
-This will configure everything needed to run:
+This will configure everything needed to run locally:
   • your GitHub account (commit author identity)
   • which repos the bot may touch
-  • your control repo on GitHub + DC_PAT for Actions
+  • optional local cron schedule (your machine must be on)
 `);
 
   await ensureGhCli();
@@ -283,22 +174,21 @@ This will configure everything needed to run:
   console.log(`\n✓ Wrote ${configPath}`);
   console.log(`✓ Wrote ${reposPath}`);
 
-  const { controlRepo, pushed, secretSet } = await setupControlRepo(cwd, user.login);
+  const cronInstalled = await offerCronInstall(cwd);
 
   console.log(`
 ✓ Onboarding complete
 
-Control repo:  https://github.com/${controlRepo}
+Install dir:   ${cwd}
 Targets:       ${repoNames.join(", ")}
 Author:        ${gitAuthor} <${gitEmail}>
-DC_PAT secret: ${secretSet ? "set" : "NOT set — add it before Actions can run"}
-Pushed:        ${pushed ? "yes" : "no — push when ready"}
+Cron:          ${cronInstalled ? "installed (every 2h at :17)" : "not installed — see README"}
 
 Test locally (from this folder):
   npx dc dry-run
   npx dc run
 
-Trigger Actions:
-  gh workflow run daily-commit --repo ${controlRepo}
+Install cron later:
+  bash scripts/install-cron.sh
 `);
 }

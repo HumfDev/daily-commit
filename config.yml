@@ -7,7 +7,7 @@
 # Probability [0-1] that ANY action runs on a given scheduler tick.
 runProbability: 1
 
-# Hours (0-23, UTC) during which daily-commit will never act.
+# Hours (0-23, local machine time) during which daily-commit will never act.
 quietHours: []
 
 # Max number of actions (summed across all repos) performed per calendar day.
@@ -38,6 +38,5 @@ cooldownHours: 0
 # ("Keep my email addresses private"), typically:
 #   {id}+{login}@users.noreply.github.com
 # or {login}@users.noreply.github.com
-# The PAT in DC_PAT must belong to this same user (or have push access).
 gitAuthor: "HumfDev"
 gitEmail: "143867285+HumfDev@users.noreply.github.com"

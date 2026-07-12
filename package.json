@@ -23,8 +23,7 @@
     "publish:npm": "bash scripts/publish.sh --upload"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "repository": {
     "type": "git",

@@ -74,6 +74,10 @@ export async function runInstall(targetDir = "daily-commit"): Promise<void> {
   const npmCode = await runInherit("npm", ["install"], { cwd: dest });
   if (npmCode !== 0) throw new Error("npm install failed");
 
+  console.log("→ Building CLI…");
+  const buildCode = await runInherit("npm", ["run", "build"], { cwd: dest });
+  if (buildCode !== 0) throw new Error("npm run build failed");
+
   console.log("→ Starting interactive onboarding…\n");
   const prev = process.cwd();
   process.chdir(dest);
@@ -93,5 +97,8 @@ Commands (from that folder — use npx so macOS's system \`dc\` calculator is no
   npx dc onboard     # re-run setup
   npx dc dry-run     # safe test
   npx dc run         # live tick
+
+Schedule locally:
+  bash scripts/install-cron.sh
 `);
 }
