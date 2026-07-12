@@ -100,8 +100,8 @@ function printUsage(): void {
   console.error(`daily commit (dc)
 
 Usage:
-  npm create daily-commit          Download, install deps, run onboard
-  npm create daily-commit@latest -- my-dir
+  npx daily-commit                 Download, install deps, run onboard
+  npx daily-commit@latest -- my-dir
   dc install [dir]                 Same, from an existing checkout
   dc onboard                       Interactive setup (GitHub account + repos)
   dc run                           Run one daily-commit tick

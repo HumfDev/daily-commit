@@ -59,13 +59,13 @@ entire content-generation surface in `src/templates/` and `src/mutations.ts`.
 After this package is on npm:
 
 ```bash
-npm create daily-commit
+npx daily-commit
 ```
 
 Optional directory name:
 
 ```bash
-npm create daily-commit@latest -- my-daily-commit
+npx daily-commit@latest -- my-daily-commit
 ```
 
 Until then (from GitHub directly):
@@ -90,7 +90,7 @@ Publishing this package to npm: see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Setup
 
-1. **Install** via `npm create daily-commit`, or clone this repo as your control
+1. **Install** via `npx daily-commit`, or clone this repo as your control
    repo (the workflow runs *here* and acts on repos you select).
 
 2. **Onboard** (`dc onboard`) writes `config.yml` + `repos.yml` for you:

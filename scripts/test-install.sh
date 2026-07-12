@@ -11,9 +11,9 @@ cd "$ROOT"
 TGZ="${1:-}"
 if [ -z "$TGZ" ]; then
   npm run build >/dev/null
-  rm -f create-daily-commit-*.tgz
+  rm -f daily-commit-*.tgz
   npm pack >/dev/null
-  TGZ="$(ls -1 create-daily-commit-*.tgz | head -1)"
+  TGZ="$(ls -1 daily-commit-*.tgz | head -1)"
 fi
 
 TGZ="$(cd "$(dirname "$TGZ")" && pwd)/$(basename "$TGZ")"
@@ -28,14 +28,14 @@ npm install --prefix "$TMP/prefix" "$TGZ" --silent
 BIN="$TMP/prefix/node_modules/.bin"
 export PATH="$BIN:$PATH"
 
-echo "→ create-daily-commit help"
-create-daily-commit help | head -5
+echo "→ daily-commit help"
+daily-commit help | head -5
 
 echo "→ dc help"
 dc help | head -5
 
 # Confirm both bins resolve to the same package
-test -x "$BIN/create-daily-commit"
+test -x "$BIN/daily-commit"
 test -x "$BIN/dc"
 
 echo "✓ smoke test passed"

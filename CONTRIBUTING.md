@@ -1,12 +1,12 @@
-# Contributing & publishing create-daily-commit
+# Contributing & publishing daily-commit
 
 This repo is both:
 
 1. A **template / control-repo** users clone (GitHub Actions cron lives here)
-2. An **npm CLI package** named `create-daily-commit` so anyone can run:
+2. An **npm CLI package** named `daily-commit` so anyone can run:
 
 ```bash
-npm create daily-commit
+npx daily-commit
 ```
 
 That mirrors how Python projects ship a global CLI via PyPI (`pipx install dcad`) — for Node, the equivalent is publishing to **npm**.
@@ -17,26 +17,26 @@ That mirrors how Python projects ship a global CLI via PyPI (`pipx install dcad`
 
 ### 1. Turn the repo into an npm CLI package
 
-- Package name: `create-daily-commit` in `package.json`
+- Package name: `daily-commit` in `package.json`
 - CLI entry points in `package.json`:
 
 ```json
 "bin": {
-  "create-daily-commit": "./dist/index.js",
+  "daily-commit": "./dist/index.js",
   "dc": "./dist/index.js"
 }
 ```
 
-`npm create daily-commit` looks up the package `create-daily-commit` and runs its bin (which scaffolds + onboards). After install, `dc` is the short CLI.
+`npx daily-commit` runs the package bin (which scaffolds + onboards). After install, `dc` is the short CLI.
 
 ### 2. Ship compiled JS in the package
 
-`npm run build` compiles `src/` → `dist/`. Only `dist/` (plus README/LICENSE) is published — the create command then **clones this GitHub repo** for the full control-repo template.
+`npm run build` compiles `src/` → `dist/`. Only `dist/` (plus README/LICENSE) is published — the installer then **clones this GitHub repo** for the full control-repo template.
 
 ### 3. Build / publish scripts
 
 - `scripts/publish.sh` — build, test, `npm pack`, smoke-test; optional `--upload` to npm
-- `scripts/test-install.sh` — installs the tarball in a temp prefix and checks `create-daily-commit help` / `dc help`
+- `scripts/test-install.sh` — installs the tarball in a temp prefix and checks `daily-commit help` / `dc help`
 
 ### 4. GitHub Actions publish workflow
 
@@ -62,11 +62,11 @@ For CI, prefer a **classic Automation** token:
 
 If you insist on granular: grant **Read and write** to packages, and allow
 publishing **new packages** under your user. A read-only or package-scoped
-token that doesn't include `create-daily-commit` yet will fail with 403.
+token that doesn't include `daily-commit` yet will fail with 403.
 
 **Option B — Trusted Publishing / OIDC (no long-lived token)**
 
-- npmjs.com → package `create-daily-commit` → Settings → Trusted Publisher  
+- npmjs.com → package `daily-commit` → Settings → Trusted Publisher  
   - GitHub user/org: your user  
   - Repository: `daily-commit`  
   - Workflow filename: `publish.yml`
@@ -94,9 +94,9 @@ NPM_TOKEN=… bash scripts/publish.sh --upload   # upload to npm
 ## What end users run (after it’s on npm)
 
 ```bash
-npm create daily-commit
+npx daily-commit
 # or with a custom folder:
-npm create daily-commit@latest -- my-daily-commit
+npx daily-commit@latest -- my-daily-commit
 
 cd daily-commit   # or your folder name
 npx dc dry-run
@@ -105,9 +105,9 @@ npx dc dry-run
 Optional global CLI (after the control repo exists, or for the scaffolder):
 
 ```bash
-npm install -g create-daily-commit
-create-daily-commit          # scaffold
-dc help                      # same binary
+npm install -g daily-commit
+daily-commit          # scaffold
+dc help               # same binary
 ```
 
 ---
@@ -127,8 +127,8 @@ Install from a local tarball:
 
 ```bash
 bash scripts/publish.sh
-npm install -g ./create-daily-commit-*.tgz
-create-daily-commit help
+npm install -g ./daily-commit-*.tgz
+daily-commit help
 ```
 
 Or run the scaffolder straight from GitHub (no npm publish needed):
@@ -139,4 +139,4 @@ npx github:HumfDev/daily-commit
 
 ---
 
-**Short version:** Package the repo as `create-daily-commit` with `bin` → `dist/index.js`, add `scripts/publish.sh` + `publish.yml`, store `NPM_TOKEN` (or Trusted Publishing), bump the version, cut a GitHub release — then users run `npm create daily-commit` to download and onboard.
+**Short version:** Package the repo as `daily-commit` with `bin` → `dist/index.js`, add `scripts/publish.sh` + `publish.yml`, store `NPM_TOKEN` (or Trusted Publishing), bump the version, cut a GitHub Release — then users run `npx daily-commit` to download and onboard.

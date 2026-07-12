@@ -54,8 +54,8 @@ async function cloneRepo(dest: string): Promise<void> {
 /**
  * One-shot installer: clone → npm install → interactive onboard.
  *
- *   npm create daily-commit
- *   npm create daily-commit@latest -- my-dir
+ *   npx daily-commit
+ *   npx daily-commit@latest -- my-dir
  */
 export async function runInstall(targetDir = "daily-commit"): Promise<void> {
   await ensureTools();
@@ -63,7 +63,7 @@ export async function runInstall(targetDir = "daily-commit"): Promise<void> {
   const dest = resolve(process.cwd(), targetDir);
   if (await pathExists(dest)) {
     throw new Error(
-      `'${dest}' already exists. Pick another directory, e.g. \`npm create daily-commit@latest -- my-daily-commit\`.`,
+      `'${dest}' already exists. Pick another directory, e.g. \`npx daily-commit@latest -- my-daily-commit\`.`,
     );
   }
 

@@ -1,11 +1,11 @@
 {
-  "name": "create-daily-commit",
+  "name": "daily-commit",
   "version": "0.1.0",
   "description": "Scaffold and run daily-commit: deterministic, no-AI GitHub repo maintenance via git/gh.",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "create-daily-commit": "dist/index.js",
+    "daily-commit": "dist/index.js",
     "dc": "dist/index.js"
   },
   "files": [
@@ -38,8 +38,7 @@
     "github",
     "cli",
     "automation",
-    "daily-commit",
-    "create-"
+    "daily-commit"
   ],
   "dependencies": {
     "js-yaml": "^4.1.0",

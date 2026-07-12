@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build, pack, and smoke-test create-daily-commit. Optionally upload to npm.
+# Build, pack, and smoke-test daily-commit. Optionally upload to npm.
 #
 # Usage:
 #   bash scripts/publish.sh              # build + pack + smoke test
