@@ -1,6 +1,6 @@
 {
   "name": "daily-commit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Scaffold and run daily-commit: deterministic, no-AI GitHub repo maintenance via git/gh.",
   "type": "module",
   "license": "MIT",
@@ -14,7 +14,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && chmod +x dist/index.js",
     "prepublishOnly": "npm run build && npm test",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

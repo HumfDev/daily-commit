@@ -37,5 +37,6 @@ dc help | head -5
 # Confirm both bins resolve to the same package
 test -x "$BIN/daily-commit"
 test -x "$BIN/dc"
+test -x "$TMP/prefix/node_modules/daily-commit/dist/index.js"
 
 echo "✓ smoke test passed"
