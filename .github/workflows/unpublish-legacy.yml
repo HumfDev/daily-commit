@@ -1,0 +1,38 @@
+name: unpublish-legacy
+
+# One-shot: remove the mistaken create-daily-commit package from npm.
+# Delete this workflow after it succeeds.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unpublish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Unpublish create-daily-commit
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NPM_TOKEN:-}" ]; then
+            echo "NPM_TOKEN secret is missing" >&2
+            exit 1
+          fi
+          npm config set "//registry.npmjs.org/:_authToken" "$NPM_TOKEN"
+          echo "→ Current package metadata (if any):"
+          npm view create-daily-commit name version time --json || true
+          echo "→ Unpublishing create-daily-commit (entire package)"
+          npm unpublish create-daily-commit --force
+          echo "→ Verify gone:"
+          if npm view create-daily-commit version >/dev/null 2>&1; then
+            echo "Package still visible on registry" >&2
+            exit 1
+          fi
+          echo "✓ create-daily-commit removed from npm"

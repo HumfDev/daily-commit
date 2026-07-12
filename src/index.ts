@@ -110,11 +110,7 @@ Usage:
 
 function invokedAsInstaller(): boolean {
   const bin = basename(process.argv[1] ?? "").replace(/\.(js|mjs|cjs)$/i, "");
-  return (
-    bin === "create-daily-commit" ||
-    bin === "install-daily-commit" ||
-    bin === "daily-commit"
-  );
+  return bin === "daily-commit";
 }
 
 async function main(): Promise<void> {
