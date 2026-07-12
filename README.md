@@ -12,7 +12,7 @@ Runs on **your machine** via local cron (like [commit-bot](https://github.com/th
 ## What it actually does
 
 Once a day-ish (randomized — see below), for one repo you've listed in
-[`repos.yml`](./repos.yml), it does exactly one of:
+`repos.yml` (created by `dc onboard`), it does exactly one of:
 
 - **commit** — a small, safe, non-functional change (e.g. a changelog-style
   log entry, a `README.md` "last synced" marker), pushed straight to the
@@ -126,11 +126,7 @@ npx dc run       # live tick
 
 ## Config reference
 
-- **`config.yml`** — global scheduling/randomization: `runProbability`,
-  `quietHours`, `maxActionsPerDay`, `actionWeights`, default `safePaths`,
-  `cooldownHours`, plus `gitAuthor` / `gitEmail`.
-- **`repos.yml`** — target repos with per-repo action toggles, `safePaths`
-  override, and optional `verifyCommand`.
+- **`config.example.yml` / `repos.example.yml`** — reference templates (copy or use `dc onboard` to generate `config.yml` / `repos.yml` locally; those files are gitignored).
 
 ## Safety model
 

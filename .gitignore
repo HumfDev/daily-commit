@@ -7,4 +7,6 @@ dist/
 .dc-cache/
 .dc-state.json
 .upkeep-state.json
+config.yml
+repos.yml
 *.tgz

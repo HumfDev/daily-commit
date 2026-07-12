@@ -1,0 +1,29 @@
+# Global settings for daily-commit. Per-repo overrides live in repos.example.yml.
+#
+# Run `npx dc onboard` to generate config.yml + repos.yml locally (gitignored).
+
+runProbability: 0.35
+
+# Hours (0-23, local machine time) during which daily-commit will never act.
+quietHours: [0, 1, 2, 3, 4, 5]
+
+maxActionsPerDay: 2
+
+actionWeights:
+  commit: 3
+  pull_request: 2
+  review: 2
+  issue: 1
+  noop: 4
+
+safePaths:
+  - "docs/**"
+  - "*.md"
+  - "CHANGELOG.md"
+  - ".github/**"
+
+cooldownHours: 20
+
+# Replace via `dc onboard` (GitHub → Settings → Emails for noreply address).
+gitAuthor: "YOUR_GITHUB_USERNAME"
+gitEmail: "YOUR_ID+YOUR_GITHUB_USERNAME@users.noreply.github.com"

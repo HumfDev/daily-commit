@@ -1,0 +1,18 @@
+# Target repositories daily-commit may act on.
+#
+# Run `npx dc onboard` to select your repos interactively.
+# Your `gh` login (or GH_TOKEN) needs contents/pull-requests/issues write
+# on every repo listed here.
+
+repos:
+  - repo: "YOUR_USERNAME/YOUR_REPO"
+    actions:
+      commit: true
+      pull_request: true
+      review: true
+      issue: true
+    safePaths:
+      - "docs/**"
+      - "*.md"
+      - "CHANGELOG.md"
+    # verifyCommand: "npm test --silent"
