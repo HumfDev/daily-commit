@@ -17,7 +17,7 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: Unpublish create-daily-commit
+      - name: Remove create-daily-commit from npm
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -28,11 +28,22 @@ jobs:
           npm config set "//registry.npmjs.org/:_authToken" "$NPM_TOKEN"
           echo "→ Current package metadata (if any):"
           npm view create-daily-commit name version time --json || true
-          echo "→ Unpublishing create-daily-commit (entire package)"
+
+          set +e
+          echo "→ Attempt unpublish (may require OTP on some accounts)"
           npm unpublish create-daily-commit --force
-          echo "→ Verify gone:"
-          if npm view create-daily-commit version >/dev/null 2>&1; then
-            echo "Package still visible on registry" >&2
-            exit 1
+          UNPUBLISH_STATUS=$?
+          set -e
+
+          if [ "$UNPUBLISH_STATUS" -eq 0 ]; then
+            if npm view create-daily-commit version >/dev/null 2>&1; then
+              echo "Package still visible after unpublish" >&2
+              exit 1
+            fi
+            echo "✓ create-daily-commit unpublished"
+            exit 0
           fi
-          echo "✓ create-daily-commit removed from npm"
+
+          echo "→ Unpublish blocked; deprecating instead so installs warn users away"
+          npm deprecate create-daily-commit@"*" "DEPRECATED: use the daily-commit package instead (npx daily-commit). create-daily-commit was published by mistake and should not be used."
+          echo "✓ create-daily-commit deprecated"
