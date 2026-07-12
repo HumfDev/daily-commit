@@ -56,6 +56,8 @@ entire content-generation surface in `src/templates/` and `src/mutations.ts`.
 
 ## Quick start (one command)
 
+After this package is on npm:
+
 ```bash
 npm create daily-commit
 ```
@@ -66,16 +68,14 @@ Optional directory name:
 npm create daily-commit@latest -- my-daily-commit
 ```
 
+Until then (from GitHub directly):
+
+```bash
+npx github:HumfDev/daily-commit
+```
+
 That downloads the project, installs dependencies, then runs **interactive
 terminal onboarding** (stdin prompts only — no custom UI / browser login).
-It will:
-
-1. Accept a GitHub PAT pasted in the terminal (if not already logged in)
-2. Set your commit identity (`gitAuthor` / `gitEmail`)
-3. Let you multi-select which repos the bot may touch
-4. Create (or use) **your** control repo on GitHub
-5. Optionally set the `DC_PAT` Actions secret from your `gh` login
-6. Push config so scheduled Actions can run
 
 Then:
 
@@ -86,11 +86,7 @@ npx dc dry-run
 
 (Use `npx dc` — bare `dc` is macOS’s calculator.)
 
-Already have a clone?
-
-```bash
-npx dc onboard
-```
+Publishing this package to npm: see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Setup
 

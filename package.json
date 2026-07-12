@@ -1,34 +1,46 @@
 {
   "name": "create-daily-commit",
   "version": "0.1.0",
-  "description": "Deterministic, no-AI daily automation that keeps connected repos looking alive: safe commits, PR reviews, pull requests, and issues — driven entirely by git/gh CLI commands, never by model inference.",
+  "description": "Scaffold and run daily-commit: deterministic, no-AI GitHub repo maintenance via git/gh.",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "create-daily-commit": "./bin/install-daily-commit.cjs",
-    "dc": "./bin/install-daily-commit.cjs"
+    "create-daily-commit": "./dist/index.js",
+    "dc": "./dist/index.js"
   },
   "files": [
-    "bin/",
     "dist/",
-    "src/",
-    "config.yml",
-    "repos.yml",
-    ".github/",
     "README.md",
-    "LICENSE",
-    "tsconfig.json"
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run build && npm test",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "pack:check": "npm run build && npm pack --dry-run",
+    "publish:dry": "bash scripts/publish.sh",
+    "publish:npm": "bash scripts/publish.sh --upload"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/HumfDev/daily-commit.git"
   },
+  "homepage": "https://github.com/HumfDev/daily-commit#readme",
+  "bugs": {
+    "url": "https://github.com/HumfDev/daily-commit/issues"
+  },
+  "keywords": [
+    "github",
+    "cli",
+    "automation",
+    "daily-commit",
+    "create-"
+  ],
   "dependencies": {
     "js-yaml": "^4.1.0",
     "minimatch": "^10.0.1",
