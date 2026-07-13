@@ -14,8 +14,8 @@ There is **no GitHub Actions** infrastructure — scheduling is local cron only.
 - **`npx daily-commit`** — downloads, clones this repo locally, runs onboard
 - **`config.yml` / `repos.yml`** — user config in their install folder
 - **`scripts/install-cron.sh`** — adds a crontab entry (every 2h at :17)
-- **`dc run`** — one tick; scheduler + picker decide whether/how to act
-- **`.dc-state.json`** — local state (cooldowns, daily counts)
+- **`dc run`** — catch-up: ≥`minActionsPerRepoPerDay` success per selected repo, then optional bonus ticks
+- **`.dc-state.json`** — local state (cooldowns, global + per-repo daily counts)
 
 Auth: `gh auth login` or `GH_TOKEN` with write access to all target repos.
 
