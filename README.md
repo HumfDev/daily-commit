@@ -46,14 +46,12 @@ entire content-generation surface in `src/templates/` and `src/mutations.ts`.
 
 ## Looking organic, not robotic
 
-- Cron ticks every 2 hours, but `src/scheduler.ts` gates each tick behind
-  `runProbability`, `quietHours`, and `maxActionsPerDay` from `config.yml` —
-  so real activity lands at unpredictable times, not a fixed clock.
+- Cron ticks every 2 hours. Each `dc run` **catch-up** walks every selected
+  repo that still needs today's minimum (`minActionsPerRepoPerDay`, default 1)
+  and keeps trying actions until one succeeds (commit/PR preferred). Extra
+  bonus ticks after all repos are covered still use `runProbability` / noop.
 - If your laptop is off at cron time, that tick is skipped (same idea as
   commit-bot — gaps look natural).
-- `src/picker.ts` weighted-randomly picks which repo and which action type
-  runs (including "noop"), respecting a per-action cooldown so the same repo
-  doesn't get reviewed twice in a day.
 - Every commit message / PR title & body / issue title & body / review
   comment is drawn from a randomized template pool in `src/templates/`.
 

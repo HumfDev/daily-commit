@@ -4,17 +4,22 @@
 
 runProbability: 0.35
 
-# Hours (0-23, local machine time) during which daily-commit will never act.
+# Hours (0-23, UTC) during which daily-commit will never act.
 quietHours: [0, 1, 2, 3, 4, 5]
 
-maxActionsPerDay: 2
+# Hard cap on total successful actions across all repos (after daily minimums).
+maxActionsPerDay: 500
+
+# Every selected repo gets at least this many successful actions per day.
+# `dc run` catch-up processes all under-served repos in one invocation.
+minActionsPerRepoPerDay: 1
 
 actionWeights:
   commit: 3
   pull_request: 2
   review: 2
   issue: 1
-  noop: 4
+  noop: 1
 
 safePaths:
   - "docs/**"
@@ -22,7 +27,7 @@ safePaths:
   - "CHANGELOG.md"
   - ".github/**"
 
-cooldownHours: 20
+cooldownHours: 6
 
 # Replace via `dc onboard` (GitHub → Settings → Emails for noreply address).
 gitAuthor: "YOUR_GITHUB_USERNAME"

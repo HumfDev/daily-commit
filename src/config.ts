@@ -31,7 +31,9 @@ const ActionWeightsSchema = z.object({
 const ConfigFileSchema = z.object({
   runProbability: z.number().min(0).max(1).default(0.35),
   quietHours: z.array(z.number().int().min(0).max(23)).default([]),
-  maxActionsPerDay: z.number().int().min(0).default(2),
+  maxActionsPerDay: z.number().int().min(0).default(500),
+  /** Each selected repo gets at least this many successful actions per calendar day. */
+  minActionsPerRepoPerDay: z.number().int().min(0).default(1),
   actionWeights: ActionWeightsSchema.default({}),
   safePaths: z.array(z.string()).min(1),
   cooldownHours: z.number().min(0).default(20),

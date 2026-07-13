@@ -30,16 +30,17 @@ export function defaultOnboardConfig(identity: {
   return {
     runProbability: 0.35,
     quietHours: [0, 1, 2, 3, 4, 5],
-    maxActionsPerDay: 2,
+    maxActionsPerDay: 500,
+    minActionsPerRepoPerDay: 1,
     actionWeights: {
       commit: 3,
       pull_request: 2,
       review: 2,
       issue: 1,
-      noop: 4,
+      noop: 1,
     },
     safePaths: ["docs/**", "*.md", "CHANGELOG.md", ".github/**"],
-    cooldownHours: 20,
+    cooldownHours: 6,
     gitAuthor: identity.gitAuthor,
     gitEmail: identity.gitEmail,
   };

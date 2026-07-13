@@ -29,7 +29,15 @@ export function pickWeighted<T extends string>(weights: Record<T, number>): T {
   return entries[entries.length - 1]![0];
 }
 
+export function shuffle<T>(items: readonly T[]): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
+}
+
 export function pickSubset<T>(items: readonly T[], max: number): T[] {
-  const shuffled = [...items].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.max(0, Math.min(max, items.length)));
+  return shuffle(items).slice(0, Math.max(0, Math.min(max, items.length)));
 }
