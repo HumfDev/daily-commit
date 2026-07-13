@@ -1,18 +1,19 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { pick } from "./random.js";
-import { today } from "./templates/text.js";
+import { today, type MutationKind } from "./templates/text.js";
 
 export interface Mutation {
+  kind: MutationKind;
   filePath: string;
   description: string;
 }
 
 const LOG_BLURBS = [
-  "Routine housekeeping check-in — nothing to report.",
-  "Scheduled maintenance sweep completed.",
-  "Docs housekeeping pass.",
-  "Daily commit check-in.",
+  "check-in",
+  "routine note",
+  "log entry",
+  "housekeeping",
 ];
 
 /**
@@ -35,7 +36,7 @@ async function appendDailyCommitLog(repoDir: string): Promise<Mutation> {
   const line = `- ${today()}: ${pick(LOG_BLURBS)}\n`;
   await writeFile(absPath, existing + line, "utf8");
 
-  return { filePath: relPath, description: "Appended an entry to docs/DAILY_COMMIT_LOG.md." };
+  return { kind: "log", filePath: relPath, description: "Appended an entry to docs/DAILY_COMMIT_LOG.md." };
 }
 
 /**
@@ -63,7 +64,11 @@ async function refreshReadmeMarker(repoDir: string): Promise<Mutation | null> {
   if (next === content) return null;
 
   await writeFile(absPath, next, "utf8");
-  return { filePath: relPath, description: "Refreshed the last-synced marker in README.md." };
+  return {
+    kind: "readme-marker",
+    filePath: relPath,
+    description: "Refreshed the last-synced marker in README.md.",
+  };
 }
 
 async function readmeExists(repoDir: string): Promise<boolean> {

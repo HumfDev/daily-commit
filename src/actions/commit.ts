@@ -4,13 +4,14 @@ import { addAll, changedFiles, commit as gitCommit, currentBranch, push } from "
 import { applyRandomMutation } from "../mutations.js";
 import { checkAllowlist } from "../safety/allowlist.js";
 import { runVerifyCommand } from "../safety/verify.js";
-import { commitMessage } from "../templates/text.js";
+import { commitMessage, type MutationKind } from "../templates/text.js";
 import type { Workspace } from "../workspace.js";
 
 export interface CommitOutcome {
   performed: boolean;
   reason?: string;
   filePath?: string;
+  mutationKind?: MutationKind;
   message?: string;
   dryRun?: boolean;
 }
@@ -47,11 +48,16 @@ export async function applyCommit(
     return { performed: false, reason: verify.reason };
   }
 
-  const message = commitMessage();
+  const message = commitMessage(mutation.kind, mutation.filePath);
   await addAll({ cwd: ws.dir });
   await gitCommit(message, { cwd: ws.dir });
 
-  return { performed: true, filePath: mutation.filePath, message };
+  return {
+    performed: true,
+    filePath: mutation.filePath,
+    mutationKind: mutation.kind,
+    message,
+  };
 }
 
 /**

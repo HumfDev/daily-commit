@@ -2,7 +2,7 @@ import { scanDiff } from "../detectors/diffScan.js";
 import type { RepoEntry } from "../config.js";
 import { listOpenPRs, prDiff, reviewPullRequest } from "../gh.js";
 import { pick } from "../random.js";
-import { reviewClean, reviewIntro, reviewOutro } from "../templates/text.js";
+import { reviewBody } from "../templates/text.js";
 
 export interface ReviewOutcome {
   performed: boolean;
@@ -31,12 +31,11 @@ export async function runReviewAction(
   const diff = await prDiff(repo.repo, target.number);
   const findings = scanDiff(diff);
 
-  const body =
+  const findingsText =
     findings.length === 0
-      ? `${reviewIntro()}\n\n${reviewClean()}\n\n${reviewOutro()}`
-      : `${reviewIntro()}\n\n${findings
-          .map((f) => `- **${f.check}** in \`${f.file}\`: \`${f.snippet}\``)
-          .join("\n")}\n\n${reviewOutro()}`;
+      ? null
+      : findings.map((f) => `- **${f.check}** in \`${f.file}\`: \`${f.snippet}\``).join("\n");
+  const body = reviewBody(findingsText);
 
   if (dryRun) {
     return { performed: true, prNumber: target.number, dryRun: true, body };

@@ -29,11 +29,10 @@ export async function runPullRequestAction(
     return outcome;
   }
 
-  const details = outcome.filePath
-    ? `Changed: \`${outcome.filePath}\``
-    : "No file details available.";
-  const title = prTitle();
-  const body = prBody(details);
+  const kind = outcome.mutationKind ?? "log";
+  const filePath = outcome.filePath ?? "docs";
+  const title = prTitle(kind, filePath);
+  const body = prBody(kind, filePath);
 
   if (dryRun) {
     return { ...outcome, dryRun: true, message: `${title}\n\n${body}` };
