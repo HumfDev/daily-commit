@@ -1,155 +1,148 @@
 # daily-commit
 
-Automated, **no-AI** daily maintenance for GitHub repos: safe commits, PR
-reviews, pull requests, and issues — generated entirely by deterministic
-`git`/`gh` CLI commands, linters, and templates. No LLM calls, no embedded
-prompts, no model API keys, anywhere in this codebase.
+Local cron bot that makes small, safe commits / PRs / reviews / issues across
+**your** GitHub repos every day — **no AI**, **no GitHub Actions**, no separate
+control repo.
 
-CLI: **`dc`** (short for daily commit).
+CLI: **`daily-commit`** / **`dc`** (use `npx dc` from the install folder —
+bare `dc` is macOS’s calculator).
 
-Runs on **your machine** via local cron (like [commit-bot](https://github.com/theshteves/commit-bot)) — no GitHub Actions, no per-user control repo.
-
-## What it actually does
-
-Once a day-ish (randomized — see below), for one repo you've listed in
-`repos.yml` (created by `dc onboard`), it does exactly one of:
-
-- **commit** — a small, safe, non-functional change (e.g. a changelog-style
-  log entry, a `README.md` "last synced" marker), pushed straight to the
-  default branch.
-- **pull_request** — the same kind of safe change, opened as a PR instead of
-  pushed directly.
-- **review** — reads an open PR's diff (`gh pr diff`, no clone needed) and
-  posts a comment-only review from purely mechanical checks (leftover merge
-  conflict markers, obvious hardcoded secret patterns). Never approves or
-  requests changes.
-- **issue** — runs a deterministic detector (`git grep` TODO/FIXME sweep, or
-  `npm outdated`) and opens a templated issue if it found something, unless
-  one's already open.
-- **noop** — nothing. This is intentional and happens most ticks; see
-  "Looking organic" below.
-
-**Nothing here changes the functionality of your repo.** Commits/PRs are
-restricted to an explicit allowlist of file globs (`docs/**`, `*.md`,
-`CHANGELOG.md`, `.github/**` by default) and, if you configure a
-`verifyCommand` (e.g. your test suite), that command must pass before
-anything is pushed.
-
-## Why no AI
-
-Every action is produced by shelling out to `git` and `gh` — literally
-`src/git.ts` / `src/gh.ts`, thin wrappers around the CLIs — plus static
-detectors (`git grep`, `npm outdated`, regex diff scans) and a pool of
-pre-written text templates with random variable substitution. There is no
-network call to a model provider anywhere in this repo. You can audit the
-entire content-generation surface in `src/templates/` and `src/mutations.ts`.
-
-## Looking organic, not robotic
-
-- Cron ticks every 2 hours. Each `dc run` **catch-up** walks every selected
-  repo that still needs today's minimum (`minActionsPerRepoPerDay`, default 1)
-  and keeps trying actions until one succeeds (commit/PR preferred). Extra
-  bonus ticks after all repos are covered still use `runProbability` / noop.
-- If your laptop is off at cron time, that tick is skipped (same idea as
-  commit-bot — gaps look natural).
-- Every commit message / PR title & body / issue title & body / review
-  comment is drawn from a randomized template pool in `src/templates/`.
-
-## Quick start (one command)
+## Install
 
 ```bash
-npx daily-commit
+npx daily-commit@latest
 ```
 
-Optional directory name:
+Optional folder name:
 
 ```bash
 npx daily-commit@latest -- my-daily-commit
 ```
 
-Or from GitHub directly (no npm publish needed):
+That will:
+
+1. Clone this template into a local folder
+2. Install deps and build
+3. Run interactive onboard (`gh` login, pick **repos you own**, write config)
+4. Optionally install local cron
+
+Then test:
 
 ```bash
-npx github:HumfDev/daily-commit
+cd ~/daily-commit          # or the folder you chose
+npx dc dry-run             # no remote writes
+npx dc run                 # live: catch-up every under-served repo
 ```
 
-That downloads the project, installs dependencies, runs onboarding, and
-optionally installs local cron.
-
-Then:
+From anywhere (uses the npm package entrypoint):
 
 ```bash
-cd daily-commit   # or the directory name you chose
-npx dc dry-run
+npx daily-commit dry-run
+npx daily-commit run
 ```
 
-(Use `npx dc` — bare `dc` is macOS’s calculator.)
+## What it does
 
-Publishing this package to npm: see [CONTRIBUTING.md](./CONTRIBUTING.md).
+For each selected repo in local `repos.yml`, it can:
 
-## Setup
+| Action | Behavior |
+|--------|----------|
+| **commit** | Safe docs/meta change, push to default branch |
+| **pull_request** | Same kind of change on a branch + open a PR |
+| **review** | Comment-only mechanical check on an open PR (never approve/request changes) |
+| **issue** | Open a housekeeping issue from `git grep` TODO/FIXME or `npm outdated` |
+| **noop** | Do nothing (bonus ticks only — not during daily catch-up) |
 
-1. **Install** via `npx daily-commit` (or clone this repo and run `npx dc onboard`).
+Mutations are boring on purpose: append to `docs/DAILY_COMMIT_LOG.md`, or refresh
+a `<!-- dc:last-synced: DATE -->` marker in `README.md`. Commit/PR messages name
+the file that actually changed.
 
-2. **Onboard** (`dc onboard`) writes `config.yml` + `repos.yml`:
-   - GitHub account → `gitAuthor` / `gitEmail` (commits attribute to you)
-   - Multi-select your repos (or type `owner/name`)
-   - Optional: install cron (`scripts/install-cron.sh`)
+**Nothing here is meant to change app behavior.** Changed files must match
+`safePaths` (default: `docs/**`, `*.md`, `CHANGELOG.md`, `.github/**`). Optional
+per-repo `verifyCommand` must pass before push.
 
-3. **Authenticate** with GitHub CLI (`gh auth login`) or set `GH_TOKEN`.
-   The token needs `contents`, `pull-requests`, and `issues` **write** on
-   every repo in `repos.yml`.
+### Daily catch-up (not “one random repo”)
 
-4. **Schedule** local cron (onboarding offers this, or run manually):
+Cron (or `npx dc run`) runs **catch-up**: every selected repo that still has
+fewer than `minActionsPerRepoPerDay` successful actions **today** gets attempts
+until one succeeds (commit/PR preferred). After all repos meet the minimum,
+later ticks may do a single bonus action using `runProbability` / weights.
+
+Your machine must be **on and awake** for cron to fire. Sleeping/lid-closed
+ticks are skipped (organic gaps).
+
+## Schedule
+
+Onboard can install cron, or:
 
 ```bash
 bash scripts/install-cron.sh
-```
-
-Default schedule: every 2 hours at `:17`. Logs go to `daily-commit.log` in
-your install folder.
-
-Remove cron:
-
-```bash
 bash scripts/uninstall-cron.sh
 ```
 
-### Manual run
+Default: every **2 hours at :17**. Logs: `daily-commit.log` in the install
+folder. Inspect with `crontab -l`.
 
-```bash
-npx dc dry-run   # safe — no remote writes
-npx dc run       # live tick
-```
+Auth for cron: `GH_TOKEN=$(gh auth token)` — stay logged into GitHub CLI.
 
-## Config reference
+## Config (local only)
 
-- **`config.example.yml` / `repos.example.yml`** — reference templates (copy or use `dc onboard` to generate `config.yml` / `repos.yml` locally; those files are gitignored).
+`dc onboard` writes **gitignored** `config.yml` + `repos.yml`. Examples:
 
-## Safety model
+- [`config.example.yml`](./config.example.yml)
+- [`repos.example.yml`](./repos.example.yml)
 
-1. **Allowlist** (`src/safety/allowlist.ts`) — every changed file must match
-   a configured glob, or the action aborts before staging anything.
-2. **Verify gate** (`src/safety/verify.ts`) — if a repo defines
-   `verifyCommand`, it's run in the clone and must exit 0 before anything is
-   pushed.
-3. **Mechanical only** — the review action never approves/blocks a PR, only
-   comments; the issue action never edits code, only opens tracked issues
-   with a `housekeeping` label.
+Useful knobs:
+
+| Key | Meaning |
+|-----|---------|
+| `minActionsPerRepoPerDay` | Guarantee ≥N successful actions per selected repo per day (default `1`) |
+| `maxActionsPerDay` | Cap on total successes after minimums are met |
+| `runProbability` | Chance a bonus tick runs after mins are met |
+| `quietHours` | UTC hours with no activity |
+| `cooldownHours` | Per repo+action cooldown (ignored during catch-up) |
+| `actionWeights` | Relative odds for commit / PR / review / issue / noop |
+| `safePaths` | Glob allowlist for commit/PR file changes |
+| `gitAuthor` / `gitEmail` | Commit identity (use your GitHub noreply email) |
+
+Onboard lists **repos you own** only (excludes this installer template and a
+legacy `my-daily-commit` control repo). No “add another owner’s repo” prompt.
+
+## Auth
+
+- Prefer `gh auth login`
+- Or set `GH_TOKEN` / `GITHUB_TOKEN`
+- Needs write on **contents**, **pull-requests**, and **issues** for every
+  target in `repos.yml`
+
+## CI/CD note
+
+Doc commits/PRs can still **trigger** workflows that listen to every `push` /
+`pull_request`. To avoid noise, path-filter CI in target repos so `*.md` /
+`docs/**` don’t start builds, and consider removing `.github/**` from
+`safePaths` so this tool can’t edit Actions configs.
+
+## Safety
+
+1. **Allowlist** — non-matching files abort before stage/push  
+2. **Verify gate** — optional `verifyCommand` in the clone must exit 0  
+3. **Reviews** — comments only  
+4. **Issues** — open only; stable titles so duplicates are skipped  
 
 ## State
 
-`.dc-state.json` in your install directory tracks the last run time per
-repo+action and today's action count (`maxActionsPerDay`, `cooldownHours`).
-It stays local — not committed to GitHub.
+Local `.dc-state.json` tracks last run per `repo:action`, global daily counts,
+and **per-repo** daily successes. Not pushed to GitHub.
 
-## Future work
+## Develop / publish
 
-- GitHub App auth as an alternative to a PAT, for easier multi-repo installs.
-- More detectors (stale branches, missing test coverage, license header
-  checks).
-- Language-specific outdated-dependency detectors beyond `npm` (`pip-audit`,
-  `cargo outdated`, etc.).
+See [CONTRIBUTING.md](./CONTRIBUTING.md). Manual npm publish (no Actions in
+this repo):
+
+```bash
+npm test && npm run build
+bash scripts/publish.sh --upload   # needs NPM_TOKEN or npm login
+```
 
 ## License
 
