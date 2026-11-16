@@ -1,3 +1,4 @@
+<!-- dc:last-synced: 2026-11-16 -->
 # daily-commit
 
 Local cron bot that makes small, safe commits / PRs / reviews / issues across
